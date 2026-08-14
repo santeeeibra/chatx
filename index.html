@@ -8,6 +8,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
+<script>
+  if (localStorage.getItem('age_verified') === 'true') window.location.href = 'app.html';
+</script>
 <body class="landing-body">
 
   <div class="landing-bg">
@@ -48,20 +51,35 @@
         </div>
       </div>
 
+      <div class="age-confirm">
+        <label class="age-confirm__label">
+          <input type="checkbox" id="age-checkbox" class="age-confirm__checkbox">
+          <span>Confirmo que tengo 18 años o más y acepto los <a href="tos.html" class="link">Términos de Uso</a></span>
+        </label>
+      </div>
+
       <div class="cta-group">
-        <a href="app.html" class="btn btn--primary btn--lg" id="btn-entrar">
-          Tengo 18+ años — Entrar
-        </a>
+        <button class="btn btn--primary btn--lg" id="btn-entrar" disabled>
+          Entrar
+        </button>
         <a href="registro.html" class="btn btn--ghost btn--lg">
           Crear cuenta <span class="badge">Menos restricciones</span>
         </a>
       </div>
 
       <p class="disclaimer">
-        Al presionar "Entrar" declarás tener 18 años o más y aceptás los
-        <a href="tos.html" class="link">Términos de Uso</a>.
-        Este sitio contiene contenido para adultos.
+        Este sitio contiene contenido exclusivo para adultos (+18).
       </p>
+
+      <script>
+        const cb = document.getElementById('age-checkbox');
+        const btn = document.getElementById('btn-entrar');
+        cb.addEventListener('change', () => { btn.disabled = !cb.checked; });
+        btn.addEventListener('click', () => {
+          localStorage.setItem('age_verified', 'true');
+          window.location.href = 'app.html';
+        });
+      </script>
 
     </div>
   </div>
