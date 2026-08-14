@@ -85,7 +85,7 @@ async function iniciarApp() {
 // MATCHMAKING
 // ============================================================
 async function iniciarMatchmaking() {
-  setStatus('buscando');
+  setStatus('searching');
   ui.btnReportar.disabled = true;
 
   // Reiniciar stream local si fue cerrado
@@ -99,11 +99,12 @@ async function iniciarMatchmaking() {
     estado.slotId            = match.slotId;
     estado.remoteFingerprint = match.remoteFingerprint;
 
+    setStatus('connecting');
     await iniciarWebRTC(match);
 
   } catch (err) {
     console.error('[App] Error en matchmaking:', err);
-    setStatus('error');
+    setStatus('disconnected');
     setTimeout(iniciarMatchmaking, 3000);
   }
 }
@@ -125,7 +126,7 @@ async function iniciarWebRTC(match) {
   // Cuando llegue el stream remoto → marcar como conectado
   estado.webrtc.onRemoteStream = () => {
     estado.conectado = true;
-    setStatus('conectado');
+    setStatus('connected');
     ui.btnReportar.disabled = false;
     console.log('[App] Stream remoto recibido. Canal:', slotId, '| Rol:', role);
   };
@@ -133,6 +134,7 @@ async function iniciarWebRTC(match) {
   // Si el peer se cae → buscar nuevo
   estado.webrtc.onDisconnected = () => {
     console.log('[App] Peer desconectado. Buscando nuevo...');
+    setStatus('disconnected');
     siguiente();
   };
 
@@ -162,6 +164,11 @@ async function iniciarWebRTC(match) {
       case 'ice-candidate':
         await estado.webrtc.addIceCandidate(data.candidate);
         break;
+
+      case 'hangup':
+        console.log('[App] Remote hung up. Buscando nuevo...');
+        siguiente();
+        break;
     }
   });
 
@@ -181,11 +188,20 @@ async function siguiente() {
   estado.procesando = true;
 
   ui.btnReportar.disabled = true;
+  ui.btnSiguiente.disabled = true;
   estado.conectado = false;
 
   const slotAnterior = estado.slotId;
   estado.slotId            = null;
   estado.remoteFingerprint = null;
+
+  // Publicar hangup antes de cerrar el canal
+  if (slotAnterior) {
+    try {
+      const ch = getSignalingChannel(slotAnterior);
+      if (ch) await ch.publish('message', { type: 'hangup', fingerprint: estado.fingerprint });
+    } catch (_) {}
+  }
 
   // Cerrar peer y limpiar canal Ably
   estado.webrtc.pc?.close();
@@ -198,6 +214,22 @@ async function siguiente() {
   document.getElementById('placeholder-remote')?.classList.remove('hidden');
   const remoteVideo = document.getElementById('remoteVideo');
   if (remoteVideo) remoteVideo.srcObject = null;
+
+  // Cooldown de 2 segundos antes de re-entrar a la cola
+  await new Promise((resolve) => {
+    let t = 2;
+    ui.btnSiguiente.textContent = `Siguiente (${t}s)`;
+    const iv = setInterval(() => {
+      t--;
+      if (t <= 0) {
+        clearInterval(iv);
+        ui.btnSiguiente.textContent = 'Siguiente';
+        resolve();
+      } else {
+        ui.btnSiguiente.textContent = `Siguiente (${t}s)`;
+      }
+    }, 1000);
+  });
 
   estado.procesando = false;
   await iniciarMatchmaking();
@@ -238,16 +270,21 @@ async function toggleCam() {
 // UI HELPERS
 // ============================================================
 function setStatus(nuevoEstado) {
+  const placeholder = document.getElementById('placeholder-remote');
   ui.statusDot.className = 'status-dot';
-  const estados = {
-    buscando:  { clase: 'status-dot--waiting',   texto: 'Buscando...',                    placeholder: 'Buscando pareja...' },
-    conectado: { clase: 'status-dot--connected', texto: 'Conectado',                       placeholder: '' },
-    error:     { clase: '',                       texto: 'Error de conexión — reintentando', placeholder: 'Reconectando...' },
-  };
-  const cfg = estados[nuevoEstado] || estados.buscando;
-  if (cfg.clase) ui.statusDot.classList.add(cfg.clase);
+
+  const cfg = {
+    searching:    { clase: 'status-dot--searching',    texto: 'Buscando pareja...',  showOverlay: true,  disableSig: false },
+    connecting:   { clase: 'status-dot--waiting',      texto: 'Conectando...',        showOverlay: false, disableSig: true  },
+    connected:    { clase: 'status-dot--connected',    texto: 'Conectado',            showOverlay: false, disableSig: false },
+    disconnected: { clase: 'status-dot--disconnected', texto: 'Desconectado',         showOverlay: true,  disableSig: false },
+  }[nuevoEstado] ?? { clase: 'status-dot--searching', texto: nuevoEstado, showOverlay: true, disableSig: false };
+
+  ui.statusDot.classList.add(cfg.clase);
   ui.statusText.textContent = cfg.texto;
-  if (ui.placeholderTxt) ui.placeholderTxt.textContent = cfg.placeholder;
+  if (ui.placeholderTxt) ui.placeholderTxt.textContent = nuevoEstado === 'searching' ? 'Buscando pareja...' : '';
+  if (placeholder) placeholder.classList.toggle('hidden', !cfg.showOverlay);
+  ui.btnSiguiente.disabled = cfg.disableSig;
 }
 
 function mostrarBan(ban) {
