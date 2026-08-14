@@ -25,6 +25,7 @@ export class WebRTCManager {
 
     const localVideo = document.getElementById('localVideo');
     localVideo.srcObject = this.localStream;
+    localVideo.muted = true;
     localVideo.play().catch(() => {});
 
     document.getElementById('placeholder-local')?.classList.add('hidden');
