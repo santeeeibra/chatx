@@ -20,8 +20,11 @@ Las funcionalidades core de la conexión ya están 100% operativas:
 - ✅ **Mobile responsive layout:** fixed positions para remoteVideo (100vw/100dvh), PiP local (bottom:80px), controls (bottom bar), header compacto en <768px.
 - *Instrucción para Claude Code:* Continuar con la tarea 2-3: detectar desconexión del remoto y mostrar overlay con countdown.
 
+## Fase 3: Moderación — 1/3 Completado
+- ✅ **Report modal:** modal con razones, comentario, insert en Supabase, toast y auto-Siguiente.
+
 ## Fases Futuras (En espera)
-- 🛡️ Moderation (0/3 tareas)
+- 🛡️ Moderation (2/3 tareas restantes)
 - 🔞 Age gate & auth (0/2 tareas)
 - 💳 Monetization (0/2 tareas)
 

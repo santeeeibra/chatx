@@ -566,6 +566,104 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ========================================
+   REPORT MODAL
+   ======================================== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+.modal-backdrop.hidden { display: none; }
+
+.modal-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  width: min(420px, calc(100vw - 2rem));
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.modal-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+
+.modal-radio {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .65rem .9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  font-size: .9rem;
+  color: var(--text);
+}
+.modal-radio:hover { border-color: var(--primary); background: rgba(124,58,237,.08); }
+.modal-radio input[type="radio"] { accent-color: var(--primary); width: 16px; height: 16px; flex-shrink: 0; }
+.modal-radio:has(input:checked) { border-color: var(--primary); background: rgba(124,58,237,.15); }
+
+.modal-textarea {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: .875rem;
+  padding: .75rem 1rem;
+  resize: vertical;
+  outline: none;
+  transition: border-color .15s;
+}
+.modal-textarea::placeholder { color: var(--text-muted); }
+.modal-textarea:focus { border-color: var(--primary); }
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+}
+
+/* ========================================
+   TOAST
+   ======================================== */
+.toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: .875rem;
+  padding: .6rem 1.25rem;
+  border-radius: 999px;
+  z-index: 200;
+  white-space: nowrap;
+  box-shadow: var(--shadow);
+  opacity: 1;
+  transition: opacity .3s;
+}
+.toast.hidden { display: none; }
+
+/* ========================================
    ACCESSIBILITY
    ======================================== */
 @media (prefers-reduced-motion: reduce) {

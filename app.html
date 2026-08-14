@@ -110,6 +110,46 @@
 
   </div>
 
+  <!-- ===== REPORT MODAL ===== -->
+  <div class="modal-backdrop hidden" id="report-modal">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h2 class="modal-title" id="modal-title">Reportar usuario</h2>
+
+      <div class="modal-reasons" id="modal-reasons">
+        <label class="modal-radio">
+          <input type="radio" name="report-reason" value="Contenido inapropiado">
+          <span>Contenido inapropiado</span>
+        </label>
+        <label class="modal-radio">
+          <input type="radio" name="report-reason" value="Comportamiento ofensivo">
+          <span>Comportamiento ofensivo</span>
+        </label>
+        <label class="modal-radio">
+          <input type="radio" name="report-reason" value="Menor de edad">
+          <span>Menor de edad</span>
+        </label>
+        <label class="modal-radio">
+          <input type="radio" name="report-reason" value="Spam">
+          <span>Spam</span>
+        </label>
+        <label class="modal-radio">
+          <input type="radio" name="report-reason" value="Otro">
+          <span>Otro</span>
+        </label>
+      </div>
+
+      <textarea class="modal-textarea" id="report-comment" placeholder="Comentario adicional (opcional)" rows="3"></textarea>
+
+      <div class="modal-actions">
+        <button class="btn btn--ghost" id="btn-modal-cancel">Cancelar</button>
+        <button class="btn btn--primary" id="btn-modal-submit">Enviar reporte</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast hidden" id="toast"></div>
+
   <!-- Scripts (ES modules) -->
   <script type="module" src="js/app.js"></script>
 

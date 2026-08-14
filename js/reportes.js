@@ -19,7 +19,7 @@ import { applyBan, countBanHistory }     from './bans.js';
  * @param {string} reportanteFingerprint - Fingerprint del usuario que reporta
  * @param {string} slotId               - ID de la sesión actual (trazabilidad)
  */
-export async function reportarUsuario(reportadoFingerprint, reportanteFingerprint, slotId = null) {
+export async function reportarUsuario(reportadoFingerprint, reportanteFingerprint, slotId = null, razon = null, comentario = null) {
   try {
     // 1. Guardar reporte en la DB
     const { error: reporteError } = await supabase
@@ -28,6 +28,8 @@ export async function reportarUsuario(reportadoFingerprint, reportanteFingerprin
         reportado_fingerprint:   reportadoFingerprint,
         reportante_fingerprint:  reportanteFingerprint,
         sesion_id:               slotId,
+        razon,
+        comentario,
       });
 
     if (reporteError) {

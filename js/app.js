@@ -275,14 +275,57 @@ async function siguiente() {
   await iniciarMatchmaking();
 }
 
-async function reportar() {
+function reportar() {
   if (!estado.remoteFingerprint || !estado.conectado) return;
-  const fp     = estado.remoteFingerprint;
-  const slotId = estado.slotId;
-  console.log('[App] Reportando a:', fp);
-  await reportarUsuario(fp, estado.fingerprint, slotId);
-  await siguiente();
+  abrirModalReporte();
 }
+
+// ============================================================
+// MODAL DE REPORTE
+// ============================================================
+function abrirModalReporte() {
+  const modal = document.getElementById('report-modal');
+  // Reset
+  document.querySelectorAll('input[name="report-reason"]').forEach(r => r.checked = false);
+  document.getElementById('report-comment').value = '';
+  modal.classList.remove('hidden');
+}
+
+function cerrarModalReporte() {
+  document.getElementById('report-modal').classList.add('hidden');
+}
+
+function mostrarToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.remove('hidden');
+  setTimeout(() => toast.classList.add('hidden'), 3000);
+}
+
+async function enviarReporte() {
+  const razon = document.querySelector('input[name="report-reason"]:checked')?.value;
+  if (!razon) return;
+
+  const comentario = document.getElementById('report-comment').value.trim();
+  const reportedFp = estado.remoteFingerprint;
+  const reporterFp = estado.fingerprint;
+
+  cerrarModalReporte();
+
+  // Persistir en Supabase
+  await reportarUsuario(reportedFp, reporterFp, estado.slotId, razon, comentario);
+
+  mostrarToast('Reporte enviado');
+
+  setTimeout(() => siguiente(), 1500);
+}
+
+// Listeners del modal (se registran una sola vez)
+document.getElementById('btn-modal-cancel').addEventListener('click', cerrarModalReporte);
+document.getElementById('btn-modal-submit').addEventListener('click', enviarReporte);
+document.getElementById('report-modal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) cerrarModalReporte();
+});
 
 async function toggleMute() {
   const localStream = estado.webrtc?.localStream;
