@@ -1,27 +1,33 @@
 /**
  * matchmaking.js
  * Empareja a dos usuarios usando la tabla `sala_espera` en Supabase.
+ * El signaling de `pareja encontrada` usa Ably Realtime canales en lugar de
+ * WebSocket/Supabase Realtime persistencias.
  *
  * FLUJO:
- * 1. Buscar si hay alguien esperando (que no seamos nosotros).
- * 2. Si sí → actualizar su slot con nuestro fingerprint (atomic update).
- * 3. Si no → crear nuestro propio slot y suscribirnos con Realtime.
- * 4. Cuando se activa el slot → unirse al canal de Agora.
+ * 1. Buscar si hay alguien esperando (que no seamos nosotros) en Supabase.
+ * 2. Si sí → actualizar su slot con nuestro fingerprint (atomic update) → publicar mensaje en Ably.
+ * 3. Si no → crear nuestro propio slot y suscribirnos con Ably.
+ * 4. Cuando se activa el slot → recibir mensaje en canal Ably → unirse al canal de Agora.
  *
  * La race condition (dos usuarios tomando el mismo slot) se maneja con
  * el filtro `.eq('estado', 'esperando')` en el UPDATE — si ya fue tomado,
  * el update no afecta filas y reintentamos.
+ *
+ * El slot persiste en Supabase (para compartir el channelName de Agora),
+ * pero la notificación de `partner found` usa Ably channels.
  */
 
 import { supabase } from './supabase-client.js';
-import { CONFIG }   from './config.js';
+import { CONFIG } from './config.js';
+import { initably, subscribeSignaling, cleanupably } from './ably-signaling.js';
 
-let _realtimeChannel = null; // Suscripción activa de Realtime
+let _ablySubscriptionSlotId = null;
 
 /**
  * Busca y empareja con otro usuario disponible.
  * @param {string} miFingerprint - ID del dispositivo local
- * @returns {Promise<{channelName: string, slotId: string, remoteFingerprint: string, role: string}>}
+ * @returns {Promise<{channelName: string, slotId: string, remoteFingerprint: string, role: string, ofertaSDP?: string}>}
  */
 export async function buscarPareja(miFingerprint) {
   // 1. Limpiar slots viejos (inactivos > 30s) para no quedarse enganchado
@@ -48,12 +54,17 @@ export async function buscarPareja(miFingerprint) {
       .maybeSingle();
 
     if (!error && tomado) {
-      console.log('[Matchmaking] Pareja encontrada. Canal:', tomado.channel_name);
+      console.log('[Matchmaking] Pareja encontrada. Slot:', tomado.id);
+      const slotId = tomado.id;
+      const channelName = tomado.channel_name;
+      const remoteFingerprint = tomado.fingerprint_a;
+
+      // Retornar datos para que la app continúe y procese la oferta
       return {
-        channelName:       tomado.channel_name,
-        slotId:            tomado.id,
-        remoteFingerprint: tomado.fingerprint_a,
-        role:              'subscriber',
+        channelName,
+        slotId,
+        remoteFingerprint,
+        role: 'subscriber',
       };
     }
 
@@ -73,51 +84,45 @@ export async function buscarPareja(miFingerprint) {
 
   if (insertError) throw insertError;
 
-  console.log('[Matchmaking] Slot creado. Esperando pareja...', miSlot.id);
+  const slotId = miSlot.id;
+  console.log('[Matchmaking] Slot creado. Esperando pareja...', slotId);
 
-  // 4. Esperar a que alguien tome el slot via Realtime
-  return _esperarParejaConRealtime(miSlot, channelName, miFingerprint);
-}
-
-/**
- * Suscribirse al slot via Realtime y resolver cuando alguien se una.
- * Incluye timeout para reintentar si nadie aparece en MATCHMAKING_TIMEOUT ms.
- */
-function _esperarParejaConRealtime(miSlot, channelName, miFingerprint) {
+  // 4. Suscribirse al canal Ably para esperar que alguien más se una
+  // Esto reemplaza a _esperarParejaConRealtime usando Supabase Realtime
   return new Promise((resolve, reject) => {
-    let timeoutId;
+    // Inicializar Ably si no está inicializado
+    initably();
 
-    const channelKey = `slot_${miSlot.id}`;
-
-    _realtimeChannel = supabase
-      .channel(channelKey)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'sala_espera', filter: `id=eq.${miSlot.id}` },
-        (payload) => {
-          if (payload.new.estado === 'conectado' && payload.new.fingerprint_b) {
-            clearTimeout(timeoutId);
-            _realtimeChannel?.unsubscribe();
-            _realtimeChannel = null;
-
-            console.log('[Matchmaking] Pareja llegó al slot. Canal:', channelName);
-            resolve({
-              channelName,
-              slotId:            miSlot.id,
-              remoteFingerprint: payload.new.fingerprint_b,
-              role:              'publisher',
-            });
-          }
-        }
-      )
-      .subscribe();
+    // Suscribirse al canal Ably 'room_${slotId}'
+    subscribeSignaling(
+      slotId,
+      // onOffer: recibido cuando el otro usuario envía la oferta SDP
+      (offerData) => {
+        console.log('[Ably Signaling] Oferta recibida desde fingerprint:', offerData.fingerprint);
+        // Resolver la promesa con los datos necesarios para continuar el flujo WebRTC
+        resolve({
+          channelName,
+          slotId,
+          remoteFingerprint: offerData.fingerprint,
+          role: 'subscriber',
+          // Incluir la SDP oferta para que app.js pueda crear la respuesta
+          ofertaSDP: offerData.sdp,
+        });
+      },
+      // onAnswer: no usado en esta dirección en el flujo inicial
+      () => {},
+      // onIceCandidate: ICE candidates del otro usuario
+      (candidateData) => {
+        console.log('[Ably Signaling] ICE candidate recibido');
+        // Procesar ICE candidate en la conexión RTC (lo manejará app.js / agora-manager)
+      }
+    );
 
     // Timeout → nadie vino, limpiar slot y reintentar
-    timeoutId = setTimeout(async () => {
-      _realtimeChannel?.unsubscribe();
-      _realtimeChannel = null;
-      await limpiarSlot(miSlot.id);
-      console.log('[Matchmaking] Timeout. Reintentando...');
+    const timeoutId = setTimeout(async () => {
+      console.log('[Matchmaking] Timeout Ably. Reintentando...');
+      cleanupably();
+      await limpiarSlot(slotId);
       resolve(buscarPareja(miFingerprint)); // reintentar
     }, CONFIG.MATCHMAKING_TIMEOUT);
   });
@@ -130,8 +135,7 @@ function _esperarParejaConRealtime(miSlot, channelName, miFingerprint) {
 export async function limpiarSlot(slotId) {
   if (!slotId) return;
 
-  _realtimeChannel?.unsubscribe();
-  _realtimeChannel = null;
+  cleanupably();
 
   const { error } = await supabase
     .from('sala_espera')

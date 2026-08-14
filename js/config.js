@@ -11,11 +11,14 @@
 
 export const CONFIG = {
   // Supabase → Dashboard > Settings > API
-  SUPABASE_URL:      'https://TU_PROYECTO.supabase.co',
-  SUPABASE_ANON_KEY: 'TU_ANON_KEY_AQUI',
+  SUPABASE_URL:      'https://ippnujzindiveeldpqjv.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwcG51anppbmRpdmVlbGRwY2p2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1ODg0MTksImV4cCI6MjEwMjE2NDQxOX0.zHGNbOCGyo8XMDm1IitRaSk_0uja8pkpDUx0oDs0HHA',
 
   // Agora → console.agora.io > Project Management > App ID
-  AGORA_APP_ID: 'TU_AGORA_APP_ID',
+  AGORA_APP_ID: 'aad9d24a2210452396affed493129046',
+
+  // Ably → cuenta gratis en ably.com → Dashboard → API Keys → Pública
+  ABLY_API_KEY: 'f36l5g.gqv9zw:OTFjNzlhN2QtZDJkMS00ZDkxLTg1ZmYtZDQwZDdiZjM4ZDk2',
 
   // Timeouts (ms)
   MATCHMAKING_TIMEOUT: 60_000,   // 60s sin pareja → reintentar
