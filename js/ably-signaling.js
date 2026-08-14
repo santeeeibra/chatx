@@ -26,6 +26,8 @@ export function initably() {
 
   try {
     ablyRealtime = new ably.Realtime({ key: CONFIG.ABLY_API_KEY });
+    ablyRealtime.connection.on('connected', () => console.log('[Ably] Connected'));
+    ablyRealtime.connection.on('failed', e => console.error('[Ably] Failed', e));
     console.log('[Ably] Conectado a Realtime');
     return ablyRealtime;
   } catch (err) {
@@ -69,6 +71,7 @@ export function subscribeSignaling(slotId, onOffer, onAnswer, onIceCandidate) {
   }
 
   channel.subscribe('message', (msg) => {
+    console.log('[Ably] RX:', msg.name, msg.data);
     const data = msg.data;
     if (!data || !data.type) return;
 
@@ -106,6 +109,7 @@ export async function publishOffer(slotId, offer, fingerprint) {
     return;
   }
 
+  console.log('[Ably] TX:', 'offer');
   await channel.publish('message', {
     type: 'offer',
     sdp: offer.sdp,
@@ -128,6 +132,7 @@ export async function publishAnswer(slotId, answer, fingerprint) {
     return;
   }
 
+  console.log('[Ably] TX:', 'answer');
   await channel.publish('message', {
     type: 'answer',
     sdp: answer.sdp,
@@ -150,6 +155,7 @@ export async function publishIceCandidate(slotId, candidate, fingerprint) {
     return;
   }
 
+  console.log('[Ably] TX:', 'ice-candidate');
   await channel.publish('message', {
     type: 'ice-candidate',
     candidate: candidate.toJSON(),

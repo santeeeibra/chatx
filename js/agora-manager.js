@@ -83,8 +83,15 @@ export class AgoraManager {
         { facingMode: 'user' }      // video config → cámara frontal en mobile
       );
 
+      const stream = new MediaStream([this.localVideoTrack.getMediaStreamTrack()]);
+      console.log('[Camera] tracks:', stream.getTracks());
+      console.log('[Camera] video active:', stream.getVideoTracks()[0]?.enabled === true);
+
+      const localVideo = document.getElementById('localVideo');
+      localVideo.srcObject = stream;
+      localVideo.play().catch(() => {});
+
       document.getElementById('placeholder-local')?.classList.add('hidden');
-      this.localVideoTrack.play('video-local');
     } catch (err) {
       console.error('[Agora] No se pudo acceder a cámara/micrófono:', err);
       const el = document.getElementById('placeholder-local');
