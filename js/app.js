@@ -15,6 +15,7 @@ import { checkBan, formatTiempoRestante } from './bans.js';
 import { buscarPareja, limpiarSlot }      from './matchmaking.js';
 import { WebRTCManager }   from './webrtc-manager.js';
 import { reportarUsuario } from './reportes.js';
+import { initAuth }        from './auth.js';
 import {
   initably,
   getSignalingChannel,
@@ -61,6 +62,8 @@ async function iniciarApp() {
 
   estado.fingerprint = await getFingerprint();
   console.log('[App] Fingerprint:', estado.fingerprint);
+
+  await initAuth(estado.fingerprint);
 
   const ban = await checkBan(estado.fingerprint);
   if (ban) { mostrarBan(ban); return; }

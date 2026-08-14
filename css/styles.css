@@ -684,6 +684,103 @@ a { color: inherit; text-decoration: none; }
 .toast.hidden { display: none; }
 
 /* ========================================
+   AUTH
+   ======================================== */
+.auth-wrap { display: flex; align-items: center; position: relative; }
+
+.auth-tabs {
+  display: flex;
+  gap: .25rem;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: .25rem;
+}
+.auth-tab {
+  flex: 1;
+  padding: .45rem .9rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: calc(var(--radius-sm) - 2px);
+  font-size: .875rem;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.auth-tab.active {
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+
+.auth-fields { display: flex; flex-direction: column; gap: .75rem; }
+
+.modal-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: .875rem;
+  padding: .75rem 1rem;
+  outline: none;
+  transition: border-color .15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.modal-input::placeholder { color: var(--text-muted); }
+.modal-input:focus { border-color: var(--primary); }
+
+.auth-error {
+  color: var(--danger);
+  font-size: .825rem;
+  margin: 0;
+}
+.auth-error.hidden { display: none; }
+
+/* User avatar circle */
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7C3AED, #EC4899);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .75rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+.user-avatar.hidden { display: none; }
+
+.avatar-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: .75rem 1rem;
+  min-width: 180px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  z-index: 300;
+}
+.avatar-dropdown.hidden { display: none; }
+
+.avatar-email {
+  font-size: .8rem;
+  color: var(--text-muted);
+  margin: 0;
+  word-break: break-all;
+}
+
+/* ========================================
    ACCESSIBILITY
    ======================================== */
 @media (prefers-reduced-motion: reduce) {
