@@ -40,11 +40,16 @@ export class WebRTCManager {
 
     this.localStream.getTracks().forEach(track => this.pc.addTrack(track, this.localStream));
 
-    this.pc.ontrack = ({ streams }) => {
-      const remoteStream = streams[0];
-      document.getElementById('placeholder-remote')?.classList.add('hidden');
+    this.pc.ontrack = (e) => {
+      const remoteStream = e.streams[0];
+      console.log('[WebRTC] Remote stream received');
       const remoteVideo = document.getElementById('remoteVideo');
-      if (remoteVideo) remoteVideo.srcObject = remoteStream;
+      if (remoteVideo) {
+        remoteVideo.srcObject = remoteStream;
+        remoteVideo.onplaying = () => {
+          document.getElementById('placeholder-remote')?.classList.add('hidden');
+        };
+      }
       this.onRemoteStream?.(remoteStream);
     };
 
