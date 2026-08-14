@@ -131,11 +131,10 @@ async function iniciarWebRTC(match) {
     console.log('[App] Stream remoto recibido. Canal:', slotId, '| Rol:', role);
   };
 
-  // Si el peer se cae → buscar nuevo
+  // Si el peer se cae → mostrar overlay y buscar nuevo
   estado.webrtc.onDisconnected = () => {
-    console.log('[App] Peer desconectado. Buscando nuevo...');
-    setStatus('disconnected');
-    siguiente();
+    console.log('[App] Peer desconectado. Mostrando overlay...');
+    mostrarDesconexionRemota();
   };
 
   // Suscribirse al canal Ably para recibir señales WebRTC
@@ -166,8 +165,8 @@ async function iniciarWebRTC(match) {
         break;
 
       case 'hangup':
-        console.log('[App] Remote hung up. Buscando nuevo...');
-        siguiente();
+        console.log('[App] Remote hung up. Mostrando overlay...');
+        mostrarDesconexionRemota();
         break;
     }
   });
@@ -181,10 +180,51 @@ async function iniciarWebRTC(match) {
 }
 
 // ============================================================
+// DESCONEXIÓN REMOTA — overlay + countdown
+// ============================================================
+let _disconnectTimer = null;
+
+function mostrarDesconexionRemota() {
+  if (estado.procesando) return;
+
+  const overlay    = document.getElementById('disconnect-overlay');
+  const countdown  = document.getElementById('disconnect-countdown');
+  if (!overlay) { siguiente(); return; }
+
+  setStatus('disconnected');
+  overlay.classList.remove('hidden');
+
+  let t = 5;
+  countdown.textContent = `Buscando nueva pareja en ${t}...`;
+
+  _disconnectTimer = setInterval(() => {
+    t--;
+    if (t <= 0) {
+      clearInterval(_disconnectTimer);
+      _disconnectTimer = null;
+      overlay.classList.add('hidden');
+      siguiente();
+    } else {
+      countdown.textContent = `Buscando nueva pareja en ${t}...`;
+    }
+  }, 1000);
+}
+
+function cancelarOverlayDesconexion() {
+  if (_disconnectTimer) {
+    clearInterval(_disconnectTimer);
+    _disconnectTimer = null;
+  }
+  const overlay = document.getElementById('disconnect-overlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+// ============================================================
 // ACCIONES
 // ============================================================
 async function siguiente() {
   if (estado.procesando) return;
+  cancelarOverlayDesconexion();
   estado.procesando = true;
 
   ui.btnReportar.disabled = true;
