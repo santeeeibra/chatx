@@ -13,11 +13,11 @@ Las funcionalidades core de la conexión ya están 100% operativas:
 - ✅ **Video Remoto:** Stream remoto reproduciéndose en el contenedor principal.
 - ✅ **Audio Echo Fix:** Elemento de video local con atributo `muted` activo para prevenir eco/feedback.
 
-## Tarea Inmediata (Fase 2: UX Polish) — 3/4 Completado
+## Tarea Inmediata (Fase 2: UX Polish) — 4/4 Completado ✅
 - ✅ **Connection status UI:** setStatus() con 4 estados (searching, connecting, connected, disconnected).
 - ✅ **"Siguiente" full reset:** Publica hangup en Ably, limpia PC y remoteVideo, cooldown 2s con countdown en botón, maneja hangup entrante del remoto.
 - ✅ **Handle partner disconnect:** overlay "Tu pareja se desconectó" + countdown 5s, auto-Siguiente, click Siguiente cancela countdown.
-- ⏳ Mobile responsive layout
+- ✅ **Mobile responsive layout:** fixed positions para remoteVideo (100vw/100dvh), PiP local (bottom:80px), controls (bottom bar), header compacto en <768px.
 - *Instrucción para Claude Code:* Continuar con la tarea 2-3: detectar desconexión del remoto y mostrar overlay con countdown.
 
 ## Fases Futuras (En espera)
