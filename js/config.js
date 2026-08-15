@@ -22,5 +22,5 @@ export const CONFIG = {
 
   // Timeouts (ms)
   MATCHMAKING_TIMEOUT: 60_000,   // 60s sin pareja → reintentar
-  SLOT_CLEANUP_AGE:    30_000,   // eliminar slots inactivos > 30s
+  SLOT_CLEANUP_AGE:    55_000,   // eliminar slots inactivos > 55s
 };

@@ -79,8 +79,8 @@ export class AgoraManager {
   async initLocalVideo() {
     try {
       [this.localVideoTrack, this.localAudioTrack] = await AgoraRTC.createMicrophoneAndCameraTracks(
-        {},                         // audio config
-        { facingMode: 'user' }      // video config → cámara frontal en mobile
+        {},
+        { facingMode: 'user', encoderConfig: '720p_2' }
       );
 
       const stream = new MediaStream([this.localVideoTrack.getMediaStreamTrack()]);
