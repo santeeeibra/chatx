@@ -504,6 +504,8 @@ a { color: inherit; text-decoration: none; }
   z-index: 10;
   flex-shrink: 0;
 }
+.mobile-controls-row { display: none; }
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -801,13 +803,27 @@ a { color: inherit; text-decoration: none; }
     z-index: 30;
     padding: .5rem 1rem;
   }
-  /* Hide mic/cam buttons on mobile header — controls are in footer */
+  /* Hide header-actions on mobile — shown as a separate row below header */
   .header-actions { display: none; }
 
-  /* Video area: fills space between header and controls */
+  /* Mobile control row: auth + icon buttons above video area */
+  .mobile-controls-row {
+    position: fixed;
+    top: 56px; left: 0; right: 0;
+    z-index: 29;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .4rem;
+    padding: .35rem .75rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Video area: fills space between mobile-controls-row and bottom controls */
   .video-area {
     position: fixed;
-    top: 56px;
+    top: 94px;
     left: 0;
     right: 0;
     bottom: 80px;

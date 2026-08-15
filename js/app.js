@@ -161,6 +161,14 @@ async function iniciarApp() {
   ui.btnSounds?.addEventListener('click', toggleSounds);
   ui.btnRotateCam?.addEventListener('click', () => estado.webrtc?.rotarCamara().catch(console.error));
   ui.btnPause?.addEventListener('click', togglePausaBusqueda);
+
+  // Mobile mirror buttons — delegate to their desktop counterparts
+  document.getElementById('btn-mute-mobile')?.addEventListener('click', toggleMute);
+  document.getElementById('btn-cam-mobile')?.addEventListener('click', toggleCam);
+  document.getElementById('btn-sounds-mobile')?.addEventListener('click', toggleSounds);
+  document.getElementById('btn-rotate-cam-mobile')?.addEventListener('click', () => estado.webrtc?.rotarCamara().catch(console.error));
+  document.getElementById('btn-login-mobile')?.addEventListener('click', () => ui.btnLogin?.click());
+  document.getElementById('btn-logout-mobile')?.addEventListener('click', () => document.getElementById('btn-logout')?.click());
   _refrescarBtnSonidos();
 
   // Chat
@@ -558,14 +566,11 @@ async function iniciarWebRTC(match) {
     publishIceCandidate(slotId, candidate, estado.fingerprint);
   };
 
-  // Cuando llegue el stream remoto → marcar como conectado
+  // Cuando llegue el stream remoto → mostrar preview 5s para saltar
   estado.webrtc.onRemoteStream = (remoteStream) => {
-    estado.conectado = true;
-    setStatus('connected');
-    ui.btnReportar.disabled = false;
-    habilitarChat();
-    _iniciarVADRemoto(remoteStream);
     console.log('[App] Stream remoto recibido. Canal:', slotId, '| Rol:', role);
+    _iniciarVADRemoto(remoteStream);
+    _mostrarPreviewPareja(remoteStream);
   };
 
   // Si el peer se cae → mostrar overlay y buscar nuevo
@@ -644,6 +649,52 @@ async function iniciarWebRTC(match) {
 // DESCONEXIÓN REMOTA — overlay + countdown
 // ============================================================
 let _disconnectTimer = null;
+let _previewTimer = null;
+
+function _mostrarPreviewPareja(remoteStream) {
+  const overlay   = document.getElementById('preview-overlay');
+  const countdown = document.getElementById('preview-countdown');
+  const btnSkip   = document.getElementById('btn-skip-preview');
+  if (!overlay) {
+    _confirmarConexion(remoteStream);
+    return;
+  }
+
+  setStatus('connecting');
+  overlay.classList.remove('hidden');
+
+  let t = 5;
+  countdown.textContent = `Conectando en ${t}...`;
+
+  const onSkip = () => {
+    clearInterval(_previewTimer);
+    _previewTimer = null;
+    overlay.classList.add('hidden');
+    btnSkip.removeEventListener('click', onSkip);
+    siguiente();
+  };
+  btnSkip.addEventListener('click', onSkip);
+
+  _previewTimer = setInterval(() => {
+    t--;
+    if (t <= 0) {
+      clearInterval(_previewTimer);
+      _previewTimer = null;
+      overlay.classList.add('hidden');
+      btnSkip.removeEventListener('click', onSkip);
+      _confirmarConexion(remoteStream);
+    } else {
+      countdown.textContent = `Conectando en ${t}...`;
+    }
+  }, 1000);
+}
+
+function _confirmarConexion(remoteStream) {
+  estado.conectado = true;
+  setStatus('connected');
+  ui.btnReportar.disabled = false;
+  habilitarChat();
+}
 
 function mostrarDesconexionRemota() {
   if (estado.procesando) return;
@@ -676,8 +727,12 @@ function cancelarOverlayDesconexion() {
     clearInterval(_disconnectTimer);
     _disconnectTimer = null;
   }
-  const overlay = document.getElementById('disconnect-overlay');
-  if (overlay) overlay.classList.add('hidden');
+  document.getElementById('disconnect-overlay')?.classList.add('hidden');
+  if (_previewTimer) {
+    clearInterval(_previewTimer);
+    _previewTimer = null;
+  }
+  document.getElementById('preview-overlay')?.classList.add('hidden');
 }
 
 // ============================================================
@@ -809,6 +864,8 @@ async function toggleMute() {
   const muteado = !audioTrack.enabled;
   ui.btnMute.classList.toggle('muted', muteado);
   ui.btnMute.title = muteado ? 'Activar micrófono' : 'Silenciar micrófono';
+  const mob = document.getElementById('btn-mute-mobile');
+  if (mob) { mob.classList.toggle('muted', muteado); mob.title = ui.btnMute.title; }
 }
 
 async function toggleCam() {
@@ -820,6 +877,8 @@ async function toggleCam() {
   const apagada = !videoTrack.enabled;
   ui.btnCam.classList.toggle('muted', apagada);
   ui.btnCam.title = apagada ? 'Activar cámara' : 'Apagar cámara';
+  const mob = document.getElementById('btn-cam-mobile');
+  if (mob) { mob.classList.toggle('muted', apagada); mob.title = ui.btnCam.title; }
 }
 
 // ============================================================
@@ -841,6 +900,8 @@ function _refrescarBtnSonidos() {
   ui.btnSounds.classList.toggle('muted', muted);
   ui.btnSounds.setAttribute('aria-pressed', String(muted));
   ui.btnSounds.title = muted ? 'Activar efectos de sonido' : 'Silenciar efectos de sonido';
+  const mob = document.getElementById('btn-sounds-mobile');
+  if (mob) { mob.classList.toggle('muted', muted); mob.setAttribute('aria-pressed', String(muted)); mob.title = ui.btnSounds.title; }
 }
 
 // ============================================================
