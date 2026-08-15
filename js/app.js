@@ -46,6 +46,8 @@ const estado = {
   procesando:        false,
   isPremium:         false,
   prefs:             null,   // { genero, prefGenero, pais }
+  pausado:           false,
+  chatChannel:       null,
 };
 
 // ============================================================
@@ -64,6 +66,12 @@ const ui = {
   btnMute:        document.getElementById('btn-mute'),
   btnCam:         document.getElementById('btn-cam'),
   btnSounds:      document.getElementById('btn-sounds'),
+  btnRotateCam:   document.getElementById('btn-rotate-cam'),
+  btnPause:       document.getElementById('btn-pause-search'),
+  chatInput:      document.getElementById('chat-input'),
+  btnChatSend:    document.getElementById('btn-chat-send'),
+  chatMessages:   document.getElementById('chat-messages'),
+  chatPlaceholder:document.getElementById('chat-placeholder'),
   soundsMuted:    !getSoundsEnabled(),
 };
 
@@ -91,7 +99,13 @@ async function iniciarApp() {
   ui.btnMute.addEventListener('click', toggleMute);
   ui.btnCam.addEventListener('click', toggleCam);
   ui.btnSounds?.addEventListener('click', toggleSounds);
+  ui.btnRotateCam?.addEventListener('click', () => estado.webrtc?.rotarCamara().catch(console.error));
+  ui.btnPause?.addEventListener('click', togglePausaBusqueda);
   _refrescarBtnSonidos();
+
+  // Chat
+  ui.btnChatSend?.addEventListener('click', enviarMensajeChat);
+  ui.chatInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) enviarMensajeChat(); });
 
   document.getElementById('btn-start-search').addEventListener('click', onStartSearch);
   document.getElementById('btn-change-prefs').addEventListener('click', mostrarPanelPrefs);
@@ -259,6 +273,12 @@ async function iniciarMatchmaking() {
   try {
     const match = await buscarPareja(estado.fingerprint, estado.prefs || {}, 0, onRelaxFiltros);
 
+    // Si se pausó mientras esperábamos, limpiar y salir
+    if (estado.pausado) {
+      await limpiarSlot(match.slotId);
+      return;
+    }
+
     estado.slotId            = match.slotId;
     estado.remoteFingerprint = match.remoteFingerprint;
 
@@ -299,6 +319,7 @@ async function iniciarWebRTC(match) {
     estado.conectado = true;
     setStatus('connected');
     ui.btnReportar.disabled = false;
+    habilitarChat();
     console.log('[App] Stream remoto recibido. Canal:', slotId, '| Rol:', role);
   };
 
@@ -310,6 +331,7 @@ async function iniciarWebRTC(match) {
 
   // Suscribirse al canal Ably para recibir señales WebRTC
   const channel = getSignalingChannel(slotId);
+  estado.chatChannel = channel;
   await channel.attach();
 
   channel.subscribe('message', async (msg) => {
@@ -338,6 +360,10 @@ async function iniciarWebRTC(match) {
       case 'hangup':
         console.log('[App] Remote hung up. Mostrando overlay...');
         mostrarDesconexionRemota();
+        break;
+
+      case 'chat':
+        if (data.text) agregarMensajeChat(data.text, false);
         break;
     }
   });
@@ -399,6 +425,9 @@ async function siguiente() {
   detenerTips();
   ocultarInfoPareja();
   estado.procesando = true;
+  // Reset pause state when moving to next
+  estado.pausado = false;
+  if (ui.btnPause) ui.btnPause.textContent = '⏸ Pausar';
 
   ui.btnReportar.disabled = true;
   ui.btnSiguiente.disabled = true;
@@ -407,6 +436,8 @@ async function siguiente() {
   const slotAnterior = estado.slotId;
   estado.slotId            = null;
   estado.remoteFingerprint = null;
+  estado.chatChannel       = null;
+  deshabilitarChat();
 
   // Publicar hangup antes de cerrar el canal
   if (slotAnterior) {
@@ -545,6 +576,69 @@ function _refrescarBtnSonidos() {
   ui.btnSounds.classList.toggle('muted', muted);
   ui.btnSounds.setAttribute('aria-pressed', String(muted));
   ui.btnSounds.title = muted ? 'Activar efectos de sonido' : 'Silenciar efectos de sonido';
+}
+
+// ============================================================
+// PAUSE / RESUME BÚSQUEDA
+// ============================================================
+function togglePausaBusqueda() {
+  if (!estado.pausado) {
+    estado.pausado = true;
+    ui.btnPause.textContent = '▶ Reanudar';
+    setStatus('disconnected');
+    // Limpiar slot si estamos en cola
+    if (estado.slotId) {
+      limpiarSlot(estado.slotId);
+      estado.slotId = null;
+    }
+    cleanupably();
+    clearTimeout(_searchTimeout);
+    document.getElementById('search-error')?.classList.add('hidden');
+    const relaxEl = document.getElementById('search-relax');
+    if (relaxEl) { relaxEl.textContent = 'Búsqueda pausada.'; relaxEl.classList.remove('hidden'); }
+  } else {
+    estado.pausado = false;
+    if (ui.btnPause) ui.btnPause.textContent = '⏸ Pausar';
+    const relaxEl = document.getElementById('search-relax');
+    if (relaxEl) { relaxEl.textContent = ''; relaxEl.classList.add('hidden'); }
+    iniciarMatchmaking();
+  }
+}
+
+// ============================================================
+// CHAT DE TEXTO
+// ============================================================
+function habilitarChat() {
+  if (ui.chatInput) ui.chatInput.disabled = false;
+  if (ui.btnChatSend) ui.btnChatSend.disabled = false;
+  if (ui.chatPlaceholder) ui.chatPlaceholder.remove();
+}
+
+function deshabilitarChat() {
+  if (ui.chatInput) { ui.chatInput.disabled = true; ui.chatInput.value = ''; }
+  if (ui.btnChatSend) ui.btnChatSend.disabled = true;
+  // Reset messages
+  if (ui.chatMessages) {
+    ui.chatMessages.innerHTML = '<p class="chat-placeholder" id="chat-placeholder">El chat estará disponible cuando te conectes con alguien.</p>';
+    ui.chatPlaceholder = document.getElementById('chat-placeholder');
+  }
+}
+
+function agregarMensajeChat(texto, esMio) {
+  if (!ui.chatMessages) return;
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + (esMio ? 'chat-msg--mine' : 'chat-msg--theirs');
+  div.textContent = texto;
+  ui.chatMessages.appendChild(div);
+  ui.chatMessages.scrollTop = ui.chatMessages.scrollHeight;
+}
+
+function enviarMensajeChat() {
+  const texto = ui.chatInput?.value?.trim();
+  if (!texto || !estado.chatChannel || !estado.conectado) return;
+  ui.chatInput.value = '';
+  agregarMensajeChat(texto, true);
+  estado.chatChannel.publish('message', { type: 'chat', text: texto, fingerprint: estado.fingerprint });
 }
 
 // ============================================================

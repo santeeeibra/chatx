@@ -478,19 +478,23 @@ a { color: inherit; text-decoration: none; }
   gap: .5rem;
 }
 
-/* Video area */
+/* Video area — flex column: remote top, bottom row below */
 .video-area {
   flex: 1;
-  position: relative;
+  display: flex;
+  flex-direction: column;
   background: #000;
   overflow: hidden;
+  min-height: 0;
 }
 
-/* Remote video — fills everything */
+/* Remote video — takes all remaining space */
 .video-box--remote {
-  position: absolute;
-  inset: 0;
+  flex: 1;
+  position: relative;
   background: #0a0a12;
+  overflow: hidden;
+  min-height: 0;
 }
 .video-box--remote video {
   width: 100%;
@@ -503,25 +507,95 @@ a { color: inherit; text-decoration: none; }
   animation: remote-reveal .25s ease-out;
 }
 
-/* Local video — PiP bottom right */
+/* Bottom row: local video + chat */
+.video-bottom {
+  display: flex;
+  height: 200px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  background: #000;
+}
+
+/* Local video — fixed width in bottom row */
 .video-box--local {
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
-  width: 160px;
-  height: 120px;
-  border-radius: var(--radius-sm);
+  width: 180px;
+  flex-shrink: 0;
+  position: relative;
   overflow: hidden;
-  border: 2px solid rgba(255,255,255,.12);
-  box-shadow: 0 4px 20px rgba(0,0,0,.6);
+  border-right: 1px solid var(--border);
   background: #111;
-  z-index: 5;
 }
 .video-box--local video {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
+/* Chat panel */
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  overflow: hidden;
+}
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: .75rem;
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+.chat-placeholder {
+  color: var(--text-muted);
+  font-size: .75rem;
+  text-align: center;
+  margin: auto;
+  padding: 1rem;
+  line-height: 1.5;
+}
+.chat-msg {
+  max-width: 85%;
+  padding: .35rem .65rem;
+  border-radius: 12px;
+  font-size: .82rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.chat-msg--mine {
+  background: var(--primary);
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 3px;
+}
+.chat-msg--theirs {
+  background: var(--card);
+  color: var(--text);
+  align-self: flex-start;
+  border-bottom-left-radius: 3px;
+}
+.chat-input-row {
+  display: flex;
+  gap: .4rem;
+  padding: .5rem .65rem;
+  border-top: 1px solid var(--border);
+  background: var(--card);
+}
+.chat-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: .4rem .75rem;
+  font-size: .82rem;
+  font-family: var(--font);
+  outline: none;
+}
+.chat-input:focus { border-color: var(--primary); }
+.chat-input:disabled { opacity: .45; cursor: not-allowed; }
+.chat-input-row .btn--sm { padding: .4rem .7rem; }
 
 /* Placeholder inside video boxes */
 .video-placeholder {
@@ -675,32 +749,22 @@ a { color: inherit; text-decoration: none; }
   /* Hide mic/cam buttons on mobile header — controls are in footer */
   .header-actions { display: none; }
 
-  /* Remote video: full viewport */
+  /* Video area: fills space between header and controls */
   .video-area {
     position: fixed;
-    inset: 0;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 80px;
     z-index: 1;
   }
-  .video-box--remote {
-    position: absolute;
-    inset: 0;
-  }
-  .video-box--remote video {
-    width: 100vw;
-    height: 100dvh;
-    object-fit: cover;
-  }
 
-  /* Local PiP */
-  .video-box--local {
-    position: fixed;
-    bottom: 80px;
-    right: 16px;
-    width: 120px;
+  /* Bottom row on mobile: local smaller, chat takes remaining */
+  .video-bottom {
     height: 160px;
-    z-index: 10;
-    border-radius: 8px;
-    overflow: hidden;
+  }
+  .video-box--local {
+    width: 120px;
   }
 
   /* Controls: fixed bottom bar */
@@ -1118,8 +1182,13 @@ a { color: inherit; text-decoration: none; }
 .search-relax.hidden { display: none; }
 .search-relax:not(.hidden) { animation: fade-in .25s ease-out; }
 
-.prefs-change-btn {
+.searching-actions {
+  display: flex;
+  gap: .5rem;
   margin-top: .25rem;
+  justify-content: center;
+}
+.prefs-change-btn {
   font-size: .75rem;
   opacity: .7;
   transition: opacity .15s ease-out;

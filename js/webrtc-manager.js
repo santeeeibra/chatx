@@ -104,6 +104,47 @@ export class WebRTCManager {
   }
 
   // ----------------------------------------------------------------
+  // ROTAR CÁMARA
+  // ----------------------------------------------------------------
+
+  async rotarCamara() {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter(d => d.kind === 'videoinput');
+    if (videoDevices.length < 2) return;
+
+    const currentTrack = this.localStream?.getVideoTracks()[0];
+    const currentDeviceId = currentTrack?.getSettings?.()?.deviceId;
+    const currentIdx = videoDevices.findIndex(d => d.deviceId === currentDeviceId);
+    const nextDevice = videoDevices[(currentIdx + 1) % videoDevices.length];
+
+    const newStream = await navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: nextDevice.deviceId } },
+      audio: false,
+    });
+
+    const newVideoTrack = newStream.getVideoTracks()[0];
+
+    // Replace track in peer connection if connected
+    if (this.pc) {
+      const sender = this.pc.getSenders().find(s => s.track?.kind === 'video');
+      if (sender) await sender.replaceTrack(newVideoTrack);
+    }
+
+    // Replace track in local stream
+    if (currentTrack) {
+      currentTrack.stop();
+      this.localStream.removeTrack(currentTrack);
+    }
+    this.localStream.addTrack(newVideoTrack);
+
+    const localVideo = document.getElementById('localVideo');
+    if (localVideo) {
+      localVideo.srcObject = this.localStream;
+      localVideo.play().catch(() => {});
+    }
+  }
+
+  // ----------------------------------------------------------------
   // LIMPIEZA
   // ----------------------------------------------------------------
 
