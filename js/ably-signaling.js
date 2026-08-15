@@ -27,7 +27,13 @@ export function initably() {
   try {
     ablyRealtime = new Ably.Realtime({ key: CONFIG.ABLY_API_KEY });
     ablyRealtime.connection.on('connected', () => console.log('[Ably] Connected'));
-    ablyRealtime.connection.on('failed', e => console.error('[Ably] Failed', e));
+    ablyRealtime.connection.on('failed', e => {
+      if (e?.code === 40400 || /40400/.test(String(e?.message || ''))) {
+        console.error('[Ably] ERROR: la ABLY_API_KEY en js/config.js no corresponde a una app de Ably existente (código 40400, app no encontrada). Revisá la key en https://dashboard.ably.com');
+      } else {
+        console.error('[Ably] Failed', e);
+      }
+    });
     console.log('[Ably] Conectado a Realtime');
     return ablyRealtime;
   } catch (err) {

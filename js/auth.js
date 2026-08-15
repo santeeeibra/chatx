@@ -3,9 +3,7 @@
  * Anonymous flow continues working regardless of auth state.
  */
 
-import { CONFIG } from './config.js';
-
-const supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+import { supabase } from './supabase-client.js';
 
 // DOM refs
 const authModal     = document.getElementById('auth-modal');

@@ -18,7 +18,7 @@ export const CONFIG = {
   AGORA_APP_ID: 'aad9d24a2210452396affed493129046',
 
   // Ably → cuenta gratis en ably.com → Dashboard → API Keys → Pública
-  ABLY_API_KEY: 'f36l5g.gqv9zw:OTFjNzlhN2QtZDJkMS00ZDkxLTg1ZmYtZDQwZDdiZjM4ZDk2',
+  ABLY_API_KEY: '08MvwA.nncTfQ:FzSXw2RAhtACli7bI2sJ_KOphCmjixC7k7vSunndrnI',
 
   // Timeouts (ms)
   MATCHMAKING_TIMEOUT: 60_000,   // 60s sin pareja → reintentar

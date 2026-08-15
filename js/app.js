@@ -9,7 +9,7 @@
  * 5. "Siguiente" → cerrar peer → volver al paso 3
  */
 
-import { CONFIG }          from './config.js';
+import { supabase }        from './supabase-client.js';
 import { getFingerprint }  from './fingerprint.js';
 import { checkBan, formatTiempoRestante } from './bans.js';
 import { buscarPareja, limpiarSlot }      from './matchmaking.js';
@@ -90,12 +90,9 @@ async function iniciarApp() {
 // PREMIUM CHECK
 // ============================================================
 async function checkPremium() {
-  const { data: { session } } = await window.supabase
-    .createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY)
-    .auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) return false;
-  const { data } = await window.supabase
-    .createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY)
+  const { data } = await supabase
     .from('user_profiles')
     .select('is_premium')
     .eq('user_id', session.user.id)
