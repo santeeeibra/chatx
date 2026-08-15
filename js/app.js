@@ -59,7 +59,7 @@ const ui = {
 // INICIALIZACIÓN
 // ============================================================
 async function iniciarApp() {
-  console.log('[App] Iniciando ChatX...');
+  console.log('[App] Iniciando CamReal...');
 
   estado.fingerprint = await getFingerprint();
   console.log('[App] Fingerprint:', estado.fingerprint);
@@ -106,9 +106,20 @@ async function checkPremium() {
 // ============================================================
 // MATCHMAKING
 // ============================================================
+// Aviso UI: si no hay pareja en 30s, mostramos mensaje (Fase 3 UX)
+let _searchTimeout = null;
+
 async function iniciarMatchmaking() {
   setStatus('searching');
   ui.btnReportar.disabled = true;
+
+  // Reiniciar aviso de timeout: nada en 30s → mensaje visible
+  const searchError = document.getElementById('search-error');
+  if (searchError) searchError.classList.add('hidden');
+  clearTimeout(_searchTimeout);
+  _searchTimeout = setTimeout(() => {
+    if (searchError) searchError.classList.remove('hidden');
+  }, 30_000);
 
   // Reiniciar stream local si fue cerrado
   if (!estado.webrtc.localStream) {
@@ -125,6 +136,12 @@ async function iniciarMatchmaking() {
     await iniciarWebRTC(match);
 
   } catch (err) {
+    // Usuario baneado -> mostrar overlay y frenar reintentos
+    if (err?.ban) {
+      console.warn('[App] Usuario baneado, bloqueando matchmaking.');
+      mostrarBan(err.ban);
+      return;
+    }
     console.error('[App] Error en matchmaking:', err);
     setStatus('disconnected');
     setTimeout(iniciarMatchmaking, 3000);
@@ -387,6 +404,10 @@ function mostrarUpgradeBanner(visible) {
 // UI HELPERS
 // ============================================================
 function setStatus(nuevoEstado) {
+  // Cualquier cambio de estado limpia el aviso de "no hay pareja"
+  clearTimeout(_searchTimeout);
+  document.getElementById('search-error')?.classList.add('hidden');
+
   const placeholder = document.getElementById('placeholder-remote');
   ui.statusDot.className = 'status-dot';
 

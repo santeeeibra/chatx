@@ -1,5 +1,5 @@
 -- ============================================================
--- ChatX — Schema de Supabase
+-- CamReal — Schema de Supabase
 -- Ejecutar en: Supabase Dashboard → SQL Editor → New Query
 -- ============================================================
 

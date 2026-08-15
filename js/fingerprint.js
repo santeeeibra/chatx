@@ -19,7 +19,7 @@ export async function getFingerprint() {
   if (_cachedFingerprint) return _cachedFingerprint;
 
   // 2. Intentar desde sessionStorage (persiste durante la sesión del browser)
-  const cached = sessionStorage.getItem('chatx_fp');
+  const cached = sessionStorage.getItem('camreal_fp');
   if (cached) {
     _cachedFingerprint = cached;
     return cached;
@@ -32,13 +32,13 @@ export async function getFingerprint() {
     const visitorId = result.visitorId;
 
     _cachedFingerprint = visitorId;
-    sessionStorage.setItem('chatx_fp', visitorId);
+    sessionStorage.setItem('camreal_fp', visitorId);
     return visitorId;
   } catch (err) {
     console.error('[Fingerprint] Error al generar fingerprint:', err);
     // Fallback: ID aleatorio que dura la sesión
     const fallback = 'anon_' + Math.random().toString(36).substr(2, 16);
-    sessionStorage.setItem('chatx_fp', fallback);
+    sessionStorage.setItem('camreal_fp', fallback);
     _cachedFingerprint = fallback;
     return fallback;
   }

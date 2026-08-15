@@ -157,17 +157,25 @@ a { color: inherit; text-decoration: none; }
 }
 .link:hover { color: var(--text); }
 
-/* Spinner */
+/* Spinner animado de matchmaking */
 .spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid var(--border);
-  border-top-color: var(--primary);
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  animation: spin .8s linear infinite;
   flex-shrink: 0;
+  /* Anillo doble-tono violeta→rosa con arco abierto */
+  background: conic-gradient(from 0deg, var(--primary), var(--accent) 55%, transparent 72%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+  animation:
+    spin .9s linear infinite,
+    spinner-glow 1.6s ease-in-out infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spinner-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(109,40,217,.25); }
+  50%      { box-shadow: 0 0 16px 4px rgba(109,40,217,.35); }
+}
 
 /* Status badge */
 .status-badge {
@@ -216,6 +224,32 @@ a { color: inherit; text-decoration: none; }
   0%, 100% { box-shadow: 0 0 0 0 rgba(109,40,217,.4); }
   50% { box-shadow: 0 0 0 6px rgba(109,40,217,0); }
 }
+
+/* ========================================
+   MATCHMAKING UX — estados de búsqueda
+   ======================================== */
+
+/* Botones deshabilitados durante búsqueda (CSS puro, sin JS) */
+#app-layout:has(.status-dot--searching) #btn-siguiente,
+#app-layout:has(.status-dot--searching) #btn-reportar {
+  opacity: .45;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(.35);
+}
+
+/* Aviso de timeout: sin pareja tras ~30s de búsqueda (lo muestra app.js) */
+.search-error {
+  margin: 0;
+  max-width: 300px;
+  font-size: .82rem;
+  line-height: 1.4;
+  color: #FCA5A5;
+  text-align: center;
+}
+.search-error.hidden { display: none; }
+.search-error:not(.hidden) { animation: fade-in .4s ease; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 
 /* ========================================
@@ -820,6 +854,7 @@ a { color: inherit; text-decoration: none; }
    ACCESSIBILITY
    ======================================== */
 @media (prefers-reduced-motion: reduce) {
-  .spinner { animation: none; border-top-color: var(--primary); }
+  .spinner { animation: none; background: var(--primary); opacity: .6; }
   .status-dot--waiting, .status-dot--connected, .status-dot--searching { animation: none; }
+  .search-error:not(.hidden) { animation: none; }
 }

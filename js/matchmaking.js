@@ -19,6 +19,7 @@
  */
 
 import { supabase } from './supabase-client.js';
+import { checkBan } from './bans.js';
 import { CONFIG } from './config.js';
 import { initably, getSignalingChannel, subscribeSignaling, cleanupably } from './ably-signaling.js';
 
@@ -30,6 +31,9 @@ let _ablySubscriptionSlotId = null;
  * @returns {Promise<{channelName: string, slotId: string, remoteFingerprint: string, role: string, ofertaSDP?: string}>}
  */
 export async function buscarPareja(miFingerprint) {
+  // 0. Verificar ban activo antes de entrar a la cola (defensa en profundidad)
+  await _verificarBanActivo(miFingerprint);
+
   // 1. Limpiar slots viejos (inactivos > 30s) para no quedarse enganchado
   await _limpiarSlotsViejos();
 
@@ -156,4 +160,19 @@ async function _limpiarSlotsViejos() {
     .delete()
     .eq('estado', 'esperando')
     .lt('creado_en', limite);
+}
+
+/**
+ * Verifica si el fingerprint tiene un ban activo; si lo tiene, lanza un error
+ * con la propiedad `.ban` para que el controlador muestre la UI de bloqueo.
+ * @param {string} fingerprint
+ */
+async function _verificarBanActivo(fingerprint) {
+  const ban = await checkBan(fingerprint);
+  if (ban) {
+    console.warn('[Matchmaking] Bloqueado: ban ' + ban.tipo + ' activo para ' + fingerprint);
+    const err = new Error('DEVICE_BANNED');
+    err.ban = ban;
+    throw err;
+  }
 }

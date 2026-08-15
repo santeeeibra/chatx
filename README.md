@@ -1,4 +1,4 @@
-# ChatX — Setup Guide (Fase 1)
+# CamReal — Setup Guide
 
 Web app de videochat random para adultos. MVP funcional con matchmaking, bans y video en tiempo real.
 
