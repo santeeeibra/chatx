@@ -80,7 +80,7 @@ export class AgoraManager {
     try {
       [this.localVideoTrack, this.localAudioTrack] = await AgoraRTC.createMicrophoneAndCameraTracks(
         {},
-        { facingMode: 'user', encoderConfig: '720p_2' }
+        { facingMode: 'user', encoderConfig: '1080p_2' }
       );
 
       const stream = new MediaStream([this.localVideoTrack.getMediaStreamTrack()]);
