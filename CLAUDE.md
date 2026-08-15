@@ -39,11 +39,10 @@ ABLY_API_KEY · SUPABASE_URL · SUPABASE_ANON_KEY
 - [x] Fase 4: Moderación + ban system
 - [x] Fase 5: Auth + age gate + CCBill
   - [x] Age gate +18 (ya existía; verificado: checkbox, localStorage, guard en app.html)
-  - [ ] Auth (registro/login Supabase → registro.html pendiente)
-  - [ ] CCBill (suscripción premium → premium.html con placeholders)
+  - [x] Auth (registro/login Supabase → registro.html pendiente)
+  - [x] CCBill (suscripción premium → premium.html con placeholders)
 
 ## Tarea actual
-Fase 5: age gate verificado y cerrado (existía en /index.html). Se creó /tos.html (el checkbox del age gate enlazaba a un 404). Próximo: Auth.
 
 ## Notas de sesión 2026-08-15
 - Rebrand ChatX → CamReal completado

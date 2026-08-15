@@ -190,6 +190,11 @@
   },
   "active": "7b3fcb6a2eaf97d3",
   "lastOpenFiles": [
+    "_tmp_fp.mjs",
+    "_tmp_config.mjs",
+    "ably-signaling.mjs",
+    "auth.mjs",
+    "app.mjs",
     "_tmp_check.mjs",
     "premium.html",
     "registro.html",
@@ -205,9 +210,6 @@
     "ChatX/Decisiones/moderacion.md",
     "ChatX/ChatX/Bienvenido.md",
     "ChatX/ChatX",
-    "ChatX/Decisiones/stack.md",
-    "ChatX/Decisiones",
-    "ChatX/Fases",
-    "ChatX"
+    "ChatX/Decisiones/stack.md"
   ]
 }
