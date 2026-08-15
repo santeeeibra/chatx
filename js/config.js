@@ -11,7 +11,7 @@
 
 export const CONFIG = {
   // Supabase → Dashboard > Settings > API
-  SUPABASE_URL:      'https://ippnujzindiveeldpqjv.supabase.co',
+  SUPABASE_URL:      'https://ippnujzindiveeldpcjv.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwcG51anppbmRpdmVlbGRwY2p2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1ODg0MTksImV4cCI6MjEwMjE2NDQxOX0.zHGNbOCGyo8XMDm1IitRaSk_0uja8pkpDUx0oDs0HHA',
 
   // Agora → console.agora.io > Project Management > App ID

@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CamReal Premium</title>
+  <meta name="robots" content="noindex">
+  <title>CamReal Premium — Hazte Premium</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎥</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
@@ -16,9 +18,19 @@
       justify-content: center;
       padding: 2rem 1rem;
     }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      color: var(--text-muted);
+      font-size: .85rem;
+      margin-bottom: 1.5rem;
+      transition: color .15s;
+    }
+    .back-link:hover { color: var(--text); }
     .premium-card {
       background: var(--card);
-      border: 1px solid var(--border);
+      border: 1px solid rgba(255,215,0,.28);
       border-radius: var(--radius);
       padding: 2.5rem 2rem;
       max-width: 420px;
@@ -30,8 +42,8 @@
       display: inline-flex;
       align-items: center;
       gap: .4rem;
-      background: linear-gradient(135deg, #6D28D9, #EC4899);
-      color: #fff;
+      background: linear-gradient(135deg, #FFD700, #F59E0B);
+      color: #111;
       font-size: .75rem;
       font-weight: 700;
       letter-spacing: .08em;
@@ -44,7 +56,7 @@
       font-size: 2rem;
       font-weight: 700;
       margin-bottom: .5rem;
-      background: linear-gradient(135deg, #6D28D9, #EC4899);
+      background: linear-gradient(135deg, #FFD700, #F59E0B);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -78,127 +90,206 @@
       width: 28px;
       height: 28px;
       border-radius: 8px;
-      background: linear-gradient(135deg, rgba(109,40,217,.2), rgba(236,72,153,.2));
-      border: 1px solid rgba(109,40,217,.35);
+      background: rgba(255,215,0,.12);
+      border: 1px solid rgba(255,215,0,.35);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       font-size: 1rem;
     }
-    .benefit-coming {
-      font-size: .78rem;
-      color: var(--text-muted);
-      margin-left: auto;
-      background: rgba(255,255,255,.06);
-      padding: .15rem .5rem;
-      border-radius: 4px;
+    .status-block { display: none; }
+    .status-block.active { display: flex; }
+    .status-action {
+      flex-direction: column;
+      gap: 1rem;
     }
     .btn--premium {
-      background: linear-gradient(135deg, #6D28D9, #EC4899);
-      color: #fff;
+      background: linear-gradient(135deg, #FFD700, #F59E0B);
+      color: #111;
       border: none;
       width: 100%;
       font-size: 1rem;
-      font-weight: 600;
+      font-weight: 700;
       padding: .85rem 1.5rem;
       border-radius: var(--radius-sm);
       cursor: pointer;
-      transition: opacity .15s;
+      transition: opacity .15s, transform .1s;
       text-decoration: none;
       display: inline-block;
     }
     .btn--premium:hover { opacity: .9; }
+    .btn--premium:active { transform: scale(.97); }
+    .status-msg {
+      font-size: .9rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+    }
+    .status-msg a { color: var(--primary); font-weight: 600; }
+    .status-msg a:hover { text-decoration: underline; }
+    .premium-ok {
+      justify-content: center;
+      align-items: center;
+      gap: .5rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #FFD700;
+      margin: 0;
+    }
+    .premium-ok .check { font-size: 1.25rem; }
+    .premium-expiry {
+      font-size: .85rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      text-align: center;
+      margin: 0;
+    }
+    .status-loading {
+      justify-content: center;
+      font-size: .875rem;
+      color: var(--text-muted);
+    }
     .premium-footer {
-      margin-top: 1rem;
+      margin-top: 1.75rem;
       font-size: .78rem;
       color: var(--text-faint);
     }
-    .back-link {
-      display: inline-flex;
-      align-items: center;
-      gap: .4rem;
-      color: var(--text-muted);
-      font-size: .85rem;
-      margin-bottom: 1.5rem;
-      transition: color .15s;
-    }
-    .back-link:hover { color: var(--text); }
   </style>
 </head>
-<body>
+<body class="landing-body">
+
+  <div class="landing-bg">
+    <div class="landing-glow"></div>
+  </div>
+
   <main class="premium-page">
-    <a href="app.html" class="back-link">← Volver al chat</a>
+    <a href="index.html" class="back-link">← Volver al inicio</a>
 
     <div class="premium-card">
+
       <div class="premium-badge">⚡ Premium</div>
 
-      <h1 class="premium-title">CamReal Premium</h1>
+      <h1 class="premium-title">Hazte Premium</h1>
 
       <p class="premium-price"><strong>$4.99</strong> / mes</p>
 
       <ul class="premium-benefits">
         <li>
-          <span class="benefit-icon">⚡</span>
-          <span>Skips ilimitados — sin espera entre conexiones</span>
-        </li>
-        <li>
-          <span class="benefit-icon">🎥</span>
-          <span>Video HD 720p — calidad superior</span>
+          <span class="benefit-icon">🚫</span>
+          <span>Sin anuncios — experiencia limpia</span>
         </li>
         <li>
           <span class="benefit-icon">🎯</span>
-          <span>Filtros de emparejamiento</span>
-          <span class="benefit-coming">Próximamente</span>
+          <span>Filtros de género — conectá con quien querés</span>
+        </li>
+        <li>
+          <span class="benefit-icon">🛡️</span>
+          <span>Prioridad en matchmaking — menos espera</span>
+        </li>
+        <li>
+          <span class="benefit-icon">✔️</span>
+          <span>Badge verificado junto a tu nombre</span>
         </li>
       </ul>
 
-      <a href="#" class="btn--premium" id="btn-subscribe">Suscribirte ahora</a>
+      <!-- Estado de suscripción (toggle por JS) -->
+      <div id="status-checking" class="status-block status-loading active">
+        Verificando tu suscripción…
+      </div>
+
+      <div id="status-not-logged" class="status-block status-action">
+        <p class="status-msg">
+          <span>Inicia sesión para suscribirte</span>
+          <a href="registro.html">Ir a Registro / Login</a>
+        </p>
+      </div>
+
+      <div id="status-subscribe" class="status-block status-action">
+        <button type="button" id="btn-subscribe" class="btn--premium">Suscribirte por $4.99/mes</button>
+      </div>
+
+      <div id="status-premium" class="status-block status-action">
+        <p class="premium-ok"><span class="check">✓</span> Ya eres Premium</p>
+        <p class="premium-expiry" id="premium-expiry">Vencimiento: (fecha por confirmar)</p>
+      </div>
 
       <p class="premium-footer">Procesado de forma segura por CCBill · Cancela cuando quieras</p>
+
     </div>
   </main>
-
+<!-- SDKs via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script type="module">
-    import { CONFIG } from './js/config.js';
+    import { supabase } from './js/supabase-client.js';
 
-    const CCBILL_ACCT    = '';  // TODO: your CCBill clientAccnum
-    const CCBILL_SUBACC  = '';  // TODO: your CCBill clientSubacc
-    const CCBILL_FORM_ID = '';  // TODO: your CCBill FlexForm ID
+    // ── Placeholder de CCBill — reemplazar cuando tengamos las credenciales ──
+    const CCBILL_PAYMENT_URL = "https://bill.ccbill.com/jpost/signup.cgi?TODO=REEMPLAZAR";
 
-    const btn = document.getElementById('btn-subscribe');
+    // ── DOM refs ──────────────────────────────────────────────
+    const btnSubscribe = document.getElementById('btn-subscribe');
+    const statusChecking = document.getElementById('status-checking');
+    const statusNotLogged = document.getElementById('status-not-logged');
+    const statusSubscribe = document.getElementById('status-subscribe');
+    const statusPremium = document.getElementById('status-premium');
+    const premiumExpiry = document.getElementById('premium-expiry');
+    const blocks = [statusChecking, statusNotLogged, statusSubscribe, statusPremium];
 
-    async function getUserEmail() {
-      const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-      const { data } = await sb.auth.getSession();
-      return data.session?.user?.email ?? '';
+    function showBlock(block) {
+      blocks.forEach(b => b.classList.toggle('active', b === block));
     }
 
-    btn.addEventListener('click', async (e) => {
-      e.preventDefault();
+    function formatDate(iso) {
+      try {
+        return new Date(iso).toLocaleDateString('es-AR', {
+          day: 'numeric', month: 'long', year: 'numeric'
+        });
+      } catch (_) {
+        return 'fecha por confirmar';
+      }
+    }
 
-      if (!CCBILL_ACCT || !CCBILL_FORM_ID) {
-        alert('Pago próximamente disponible.');
+    // ── Botón de pago → abrir página CCBill en nueva pestaña ──
+    btnSubscribe.addEventListener('click', () => {
+      window.open(CCBILL_PAYMENT_URL, '_blank', 'noopener');
+    });
+
+    // ── Estado de suscripción ─────────────────────────────────
+    async function init() {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData.session?.user;
+
+      // No logueado → pedir login
+      if (!user) {
+        showBlock(statusNotLogged);
         return;
       }
 
-      const email = await getUserEmail();
-      const params = new URLSearchParams({
-        clientAccnum:    CCBILL_ACCT,
-        clientSubacc:    CCBILL_SUBACC,
-        initialPrice:    '4.99',
-        initialPeriod:   '30',
-        recurringPrice:  '4.99',
-        recurringPeriod: '30',
-        rebills:         '99',
-        currencyCode:    '840',
-        UDF01:           email,
-      });
+      // Logueado → verificar premium en user_profiles
+      // Si la consulta falla (tabla/columna inexistente) → siempre botón de pago, sin error
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select('is_premium, premium_until')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      const url = `https://api.ccbill.com/wap-frontflex/flexforms/${CCBILL_FORM_ID}?${params}`;
-      window.location.href = url;
-    });
+      if (error || !profile || profile.is_premium !== true) {
+        showBlock(statusSubscribe);
+        return;
+      }
+
+      // Premium activo
+      if (profile.premium_until) {
+        premiumExpiry.textContent = `Vencimiento estimado: ${formatDate(profile.premium_until)}`;
+      }
+      showBlock(statusPremium);
+    }
+
+    init();
   </script>
+
 </body>
 </html>
