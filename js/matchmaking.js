@@ -28,9 +28,12 @@ let _ablySubscriptionSlotId = null;
 /**
  * Busca y empareja con otro usuario disponible.
  * @param {string} miFingerprint - ID del dispositivo local
- * @returns {Promise<{channelName: string, slotId: string, remoteFingerprint: string, role: string, ofertaSDP?: string}>}
+ * @param {object} prefs - { genero, prefGenero, pais } opcionales
+ * @param {number} relaxLevel - 0: filtro completo, 1: sin país, 2: sin filtros
+ * @param {function} onRelax - callback(level) cuando se relajan los filtros
+ * @returns {Promise<{channelName, slotId, remoteFingerprint, role}>}
  */
-export async function buscarPareja(miFingerprint) {
+export async function buscarPareja(miFingerprint, prefs = {}, relaxLevel = 0, onRelax = null) {
   // 0. Verificar ban activo antes de entrar a la cola (defensa en profundidad)
   await _verificarBanActivo(miFingerprint);
 
@@ -38,14 +41,24 @@ export async function buscarPareja(miFingerprint) {
   await _limpiarSlotsViejos();
 
   // 2. ¿Hay alguien esperando?
-  const { data: esperando } = await supabase
+  let query = supabase
     .from('sala_espera')
     .select('*')
     .eq('estado', 'esperando')
     .neq('fingerprint_a', miFingerprint)
     .order('creado_en', { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+
+  if (relaxLevel < 2) {
+    if (prefs.prefGenero && prefs.prefGenero !== 'any') {
+      query = query.eq('genero_a', prefs.prefGenero);
+    }
+    if (prefs.pais && relaxLevel < 1) {
+      query = query.eq('pais_a', prefs.pais);
+    }
+  }
+
+  const { data: esperando } = await query.maybeSingle();
 
   if (esperando) {
     // 3a. Intentar tomar el slot (atomic update)
@@ -53,7 +66,7 @@ export async function buscarPareja(miFingerprint) {
       .from('sala_espera')
       .update({ fingerprint_b: miFingerprint, estado: 'conectado' })
       .eq('id', esperando.id)
-      .eq('estado', 'esperando') // solo si sigue esperando
+      .eq('estado', 'esperando')
       .select()
       .maybeSingle();
 
@@ -63,7 +76,6 @@ export async function buscarPareja(miFingerprint) {
       const remoteFingerprint = tomado.fingerprint_a;
       console.log('[Match] Match found:', remoteFingerprint, '| slot:', slotId);
 
-      // Notificar a User A que encontramos pareja via Ably
       initably();
       const ch = getSignalingChannel(slotId);
       if (ch) {
@@ -72,32 +84,36 @@ export async function buscarPareja(miFingerprint) {
         console.log('[Match] Confirmed');
       }
 
-      return {
-        channelName,
-        slotId,
-        remoteFingerprint,
-        role: 'publisher',
-      };
+      return { channelName, slotId, remoteFingerprint, role: 'publisher' };
     }
 
     // Slot ya tomado por otro → reintentar
     console.log('[Matchmaking] Race condition detectado. Reintentando...');
-    return buscarPareja(miFingerprint);
+    return buscarPareja(miFingerprint, prefs, relaxLevel, onRelax);
   }
 
   // 3b. No hay nadie → crear nuestro slot
   const channelName = 'ch_' + crypto.randomUUID().split('-')[0];
 
+  const slotData = {
+    fingerprint_a: miFingerprint,
+    channel_name: channelName,
+    estado: 'esperando',
+    genero_a: prefs.genero || null,
+    pref_genero_a: prefs.prefGenero || null,
+    pais_a: prefs.pais || null,
+  };
+
   const { data: miSlot, error: insertError } = await supabase
     .from('sala_espera')
-    .insert({ fingerprint_a: miFingerprint, channel_name: channelName, estado: 'esperando' })
+    .insert(slotData)
     .select()
     .single();
 
   if (insertError) throw insertError;
 
   const slotId = miSlot.id;
-  console.log('[Match] Entered queue:', miFingerprint, '| slot:', slotId);
+  console.log('[Match] Entered queue:', miFingerprint, '| slot:', slotId, '| relax:', relaxLevel);
 
   return new Promise((resolve, reject) => {
     initably();
@@ -110,7 +126,6 @@ export async function buscarPareja(miFingerprint) {
         resolved = true;
         clearTimeout(timeoutId);
         console.log('[Match] Match found (incoming):', msgData.fingerprint);
-        console.log('[Match] Confirmed');
         resolve({
           channelName,
           slotId,
@@ -122,13 +137,21 @@ export async function buscarPareja(miFingerprint) {
 
     subscribeSignaling(slotId, onMatchMessage, () => {}, () => {});
 
+    const nextRelaxLevel = relaxLevel + 1;
     const timeoutId = setTimeout(async () => {
       if (resolved) return;
       resolved = true;
-      console.log('[Matchmaking] Timeout. Reintentando...');
       cleanupably();
       await limpiarSlot(slotId);
-      resolve(buscarPareja(miFingerprint));
+
+      if (nextRelaxLevel <= 2) {
+        console.log('[Matchmaking] Timeout. Relajando filtros a nivel', nextRelaxLevel);
+        if (onRelax) onRelax(nextRelaxLevel);
+      } else {
+        console.log('[Matchmaking] Timeout. Reintentando sin filtros...');
+      }
+
+      resolve(buscarPareja(miFingerprint, prefs, Math.min(nextRelaxLevel, 2), onRelax));
     }, CONFIG.MATCHMAKING_TIMEOUT);
   });
 }

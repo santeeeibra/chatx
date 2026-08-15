@@ -36,6 +36,7 @@ const estado = {
   conectado:         false,
   procesando:        false,
   isPremium:         false,
+  prefs:             null,   // { genero, prefGenero, pais }
 };
 
 // ============================================================
@@ -79,11 +80,79 @@ async function iniciarApp() {
   ui.btnMute.addEventListener('click', toggleMute);
   ui.btnCam.addEventListener('click', toggleCam);
 
+  document.getElementById('btn-start-search').addEventListener('click', onStartSearch);
+  document.getElementById('btn-change-prefs').addEventListener('click', mostrarPanelPrefs);
+
   window.addEventListener('beforeunload', () => {
     if (estado.slotId) limpiarSlot(estado.slotId);
   });
 
-  await iniciarMatchmaking();
+  // Cargar prefs guardadas en los selectores
+  const prefsGuardadas = leerPrefs();
+  if (prefsGuardadas) {
+    document.getElementById('pref-genero-propio').value = prefsGuardadas.genero || 'M';
+    document.getElementById('pref-genero-buscar').value = prefsGuardadas.prefGenero || 'any';
+    document.getElementById('pref-pais').value          = prefsGuardadas.pais || '';
+  }
+
+  // Si ya hay prefs guardadas, ir directo al matchmaking; si no, mostrar el panel
+  if (prefsGuardadas) {
+    estado.prefs = prefsGuardadas;
+    ocultarPanelPrefs();
+    await iniciarMatchmaking();
+  } else {
+    mostrarPanelPrefs();
+  }
+}
+
+// ============================================================
+// PREFERENCIAS
+// ============================================================
+function leerPrefs() {
+  const genero    = localStorage.getItem('user_gender');
+  const prefGenero = localStorage.getItem('pref_gender');
+  const pais      = localStorage.getItem('user_country');
+  if (!genero) return null;
+  return { genero, prefGenero: prefGenero || 'any', pais: pais || '' };
+}
+
+function guardarPrefs(prefs) {
+  localStorage.setItem('user_gender',   prefs.genero);
+  localStorage.setItem('pref_gender',   prefs.prefGenero);
+  localStorage.setItem('user_country',  prefs.pais);
+}
+
+function mostrarPanelPrefs() {
+  document.getElementById('prefs-panel').classList.remove('hidden');
+  document.getElementById('prefs-searching').classList.add('hidden');
+}
+
+function ocultarPanelPrefs() {
+  document.getElementById('prefs-panel').classList.add('hidden');
+  document.getElementById('prefs-searching').classList.remove('hidden');
+}
+
+function onStartSearch() {
+  const genero    = document.getElementById('pref-genero-propio').value;
+  const prefGenero = document.getElementById('pref-genero-buscar').value;
+  const pais      = document.getElementById('pref-pais').value;
+  estado.prefs = { genero, prefGenero, pais };
+  guardarPrefs(estado.prefs);
+  ocultarPanelPrefs();
+  iniciarMatchmaking();
+}
+
+function onRelaxFiltros(level) {
+  const el = document.getElementById('search-relax');
+  if (!el) return;
+  const msgs = {
+    1: 'Ampliando búsqueda a todos los países...',
+    2: 'Buscando sin filtros de género ni país...',
+  };
+  if (msgs[level]) {
+    el.textContent = msgs[level];
+    el.classList.remove('hidden');
+  }
 }
 
 // ============================================================
@@ -123,8 +192,12 @@ async function iniciarMatchmaking() {
     await estado.webrtc.initLocalStream();
   }
 
+  // Limpiar mensaje de relax de búsqueda anterior
+  const relaxEl = document.getElementById('search-relax');
+  if (relaxEl) { relaxEl.textContent = ''; relaxEl.classList.add('hidden'); }
+
   try {
-    const match = await buscarPareja(estado.fingerprint);
+    const match = await buscarPareja(estado.fingerprint, estado.prefs || {}, 0, onRelaxFiltros);
 
     estado.slotId            = match.slotId;
     estado.remoteFingerprint = match.remoteFingerprint;
@@ -418,7 +491,13 @@ function setStatus(nuevoEstado) {
   ui.statusDot.classList.add(cfg.clase);
   ui.statusText.textContent = cfg.texto;
   if (ui.placeholderTxt) ui.placeholderTxt.textContent = nuevoEstado === 'searching' ? 'Buscando pareja...' : '';
-  if (placeholder) placeholder.classList.toggle('hidden', !cfg.showOverlay);
+  if (placeholder) {
+    placeholder.classList.toggle('hidden', !cfg.showOverlay);
+    // Si el placeholder es visible pero el panel de prefs está activo, no mostrar el spinner
+    if (cfg.showOverlay && !document.getElementById('prefs-panel')?.classList.contains('hidden')) {
+      document.getElementById('prefs-searching')?.classList.add('hidden');
+    }
+  }
   ui.btnSiguiente.disabled = cfg.disableSig;
 }
 
