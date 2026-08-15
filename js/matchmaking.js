@@ -78,11 +78,20 @@ export async function buscarPareja(miFingerprint, prefs = {}, relaxLevel = 0, on
       const ch = getSignalingChannel(slotId);
       if (ch) {
         await ch.attach();
-        await ch.publish('message', { type: 'match-found', fingerprint: miFingerprint });
+        await ch.publish('message', {
+          type: 'match-found',
+          fingerprint: miFingerprint,
+          pais: prefs.pais || '',
+          genero: prefs.genero || '',
+        });
         console.log('[Match] Confirmed');
       }
 
-      return { channelName, slotId, remoteFingerprint, role: 'publisher' };
+      return {
+        channelName, slotId, remoteFingerprint, role: 'publisher',
+        remotePais: esperando.pais_a || '',
+        remoteGenero: esperando.genero_a || '',
+      };
     }
 
     // Slot ya tomado por otro → reintentar
@@ -129,6 +138,8 @@ export async function buscarPareja(miFingerprint, prefs = {}, relaxLevel = 0, on
           slotId,
           remoteFingerprint: msgData.fingerprint,
           role: 'subscriber',
+          remotePais: msgData.pais || '',
+          remoteGenero: msgData.genero || '',
         });
       }
     };

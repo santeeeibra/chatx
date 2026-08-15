@@ -217,6 +217,11 @@ async function checkPremium() {
 let _searchTimeout = null;
 
 async function iniciarMatchmaking() {
+  // Asegurar que se muestra la pantalla de búsqueda, no el panel de prefs
+  document.getElementById('prefs-panel')?.classList.add('hidden');
+  document.getElementById('prefs-searching')?.classList.remove('hidden');
+  ocultarInfoPareja();
+  iniciarTips();
   setStatus('searching');
   ui.btnReportar.disabled = true;
 
@@ -243,6 +248,8 @@ async function iniciarMatchmaking() {
     estado.slotId            = match.slotId;
     estado.remoteFingerprint = match.remoteFingerprint;
 
+    detenerTips();
+    mostrarInfoPareja(match.remotePais, match.remoteGenero);
     setStatus('connecting');
     await iniciarWebRTC(match);
 
@@ -375,6 +382,8 @@ function cancelarOverlayDesconexion() {
 async function siguiente() {
   if (estado.procesando) return;
   cancelarOverlayDesconexion();
+  detenerTips();
+  ocultarInfoPareja();
   estado.procesando = true;
 
   ui.btnReportar.disabled = true;
@@ -504,6 +513,77 @@ async function toggleCam() {
 }
 
 // ============================================================
+// PARTNER INFO BADGE
+// ============================================================
+const PAIS_FLAGS = {
+  AR: '🇦🇷', MX: '🇲🇽', ES: '🇪🇸', CO: '🇨🇴', CL: '🇨🇱',
+  PE: '🇵🇪', VE: '🇻🇪', US: '🇺🇸', BR: '🇧🇷',
+};
+const GENERO_LABELS = { M: 'Hombre', F: 'Mujer', NB: 'Otro' };
+
+function mostrarInfoPareja(pais, genero) {
+  const badge = document.getElementById('partner-info');
+  const flagEl = document.getElementById('partner-flag');
+  const labelEl = document.getElementById('partner-label');
+  if (!badge) return;
+
+  const parts = [];
+  if (pais && PAIS_FLAGS[pais]) parts.push(PAIS_FLAGS[pais]);
+  if (genero && GENERO_LABELS[genero]) parts.push(GENERO_LABELS[genero]);
+
+  if (parts.length === 0) { badge.classList.add('hidden'); return; }
+
+  flagEl.textContent = PAIS_FLAGS[pais] || '';
+  labelEl.textContent = parts.filter(p => !PAIS_FLAGS[p]).join(' ') || GENERO_LABELS[genero] || '';
+  // Simplify: just show flag + gender label
+  flagEl.textContent = pais && PAIS_FLAGS[pais] ? PAIS_FLAGS[pais] : '';
+  labelEl.textContent = genero && GENERO_LABELS[genero] ? GENERO_LABELS[genero] : (pais || '');
+  badge.classList.remove('hidden');
+}
+
+function ocultarInfoPareja() {
+  document.getElementById('partner-info')?.classList.add('hidden');
+}
+
+// ============================================================
+// TIPS DINÁMICOS DURANTE BÚSQUEDA
+// ============================================================
+const SEARCH_TIPS = [
+  '💡 Si ves algo inapropiado, usá el botón Reportar.',
+  '🤝 Tratá a los demás como querés ser tratado.',
+  '🚫 Insultos o acoso = ban inmediato.',
+  '👁️ Estás en un espacio público. Sé respetuoso.',
+  '⚡ Los reportes se revisan rápido. Gracias por ayudar.',
+  '🔒 Tu identidad está protegida por un ID anónimo.',
+  '🌎 Podés conectar con gente de toda América Latina.',
+  '📵 Si alguien te incomoda, presioná Siguiente.',
+];
+
+let _tipInterval = null;
+
+function iniciarTips() {
+  const el = document.getElementById('search-tip');
+  if (!el) return;
+  let i = Math.floor(Math.random() * SEARCH_TIPS.length);
+  el.textContent = SEARCH_TIPS[i];
+  _tipInterval = setInterval(() => {
+    el.style.opacity = '0';
+    setTimeout(() => {
+      i = (i + 1) % SEARCH_TIPS.length;
+      el.textContent = SEARCH_TIPS[i];
+      el.style.opacity = '1';
+    }, 400);
+  }, 4000);
+}
+
+function detenerTips() {
+  clearInterval(_tipInterval);
+  _tipInterval = null;
+  const el = document.getElementById('search-tip');
+  if (el) el.textContent = '';
+}
+
+// ============================================================
 // UPGRADE BANNER
 // ============================================================
 function mostrarUpgradeBanner(visible) {
@@ -531,7 +611,7 @@ function setStatus(nuevoEstado) {
 
   ui.statusDot.classList.add(cfg.clase);
   ui.statusText.textContent = cfg.texto;
-  if (ui.placeholderTxt) ui.placeholderTxt.textContent = nuevoEstado === 'searching' ? 'Buscando pareja...' : '';
+  if (ui.placeholderTxt) ui.placeholderTxt.textContent = nuevoEstado === 'searching' ? 'Buscando pareja' : '';
   if (placeholder) {
     placeholder.classList.toggle('hidden', !cfg.showOverlay);
     // Si el placeholder es visible pero el panel de prefs está activo, no mostrar el spinner
