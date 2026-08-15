@@ -25,7 +25,7 @@ export function initably() {
   if (ablyRealtime) return ablyRealtime;
 
   try {
-    ablyRealtime = new ably.Realtime({ key: CONFIG.ABLY_API_KEY });
+    ablyRealtime = new Ably.Realtime({ key: CONFIG.ABLY_API_KEY });
     ablyRealtime.connection.on('connected', () => console.log('[Ably] Connected'));
     ablyRealtime.connection.on('failed', e => console.error('[Ably] Failed', e));
     console.log('[Ably] Conectado a Realtime');
@@ -40,7 +40,7 @@ export function initably() {
  * Obtiene (o crea) el canal de signaling para un slot ID determinado.
  * Cada slot → canal independiente → "room_${slotId}"
  * @param {string} slotId - ID del slot en sala_espera
- * @returns {ably.Channel}
+ * @returns {Ably.Channel}
  */
 export function getSignalingChannel(slotId) {
   if (!signalingChannel || signalingChannel.name !== `room_${slotId}`) {
