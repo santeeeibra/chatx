@@ -983,13 +983,15 @@ a { color: inherit; text-decoration: none; }
   font-size: .8rem;
   color: var(--accent);
   text-align: center;
-  animation: fadeIn .3s ease;
 }
+.search-relax.hidden { display: none; }
+.search-relax:not(.hidden) { animation: fade-in .25s ease-out; }
 
 .prefs-change-btn {
   margin-top: .25rem;
   font-size: .75rem;
   opacity: .7;
+  transition: opacity .15s ease-out;
 }
 
 .prefs-change-btn:hover { opacity: 1; }
