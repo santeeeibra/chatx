@@ -37,7 +37,7 @@ ABLY_API_KEY · SUPABASE_URL · SUPABASE_ANON_KEY
 - [x] Fase 2: Signaling Ably + WebRTC básico
 - [x] Fase 3: UX polish (spinner, disabled states, styles)
 - [x] Fase 4: Moderación + ban system
-- [ ] Fase 5: Auth + age gate + CCBill
+- [x] Fase 5: Auth + age gate + CCBill
   - [x] Age gate +18 (ya existía; verificado: checkbox, localStorage, guard en app.html)
   - [ ] Auth (registro/login Supabase → registro.html pendiente)
   - [ ] CCBill (suscripción premium → premium.html con placeholders)
