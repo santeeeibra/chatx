@@ -53,9 +53,7 @@ export async function buscarPareja(miFingerprint, prefs = {}, relaxLevel = 0, on
     if (prefs.prefGenero && prefs.prefGenero !== 'any') {
       query = query.eq('genero_a', prefs.prefGenero);
     }
-    if (prefs.pais && relaxLevel < 1) {
-      query = query.eq('pais_a', prefs.pais);
-    }
+    // pais solo se guarda en el slot propio (visible para otros), no filtra búsqueda
   }
 
   const { data: esperando } = await query.maybeSingle();

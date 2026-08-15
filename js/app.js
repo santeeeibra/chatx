@@ -87,13 +87,16 @@ async function iniciarApp() {
     if (estado.slotId) limpiarSlot(estado.slotId);
   });
 
-  // Cargar prefs guardadas en los selectores
+  // Cargar prefs guardadas en los radio buttons
   const prefsGuardadas = leerPrefs();
   if (prefsGuardadas) {
-    document.getElementById('pref-genero-propio').value = prefsGuardadas.genero || 'M';
-    document.getElementById('pref-genero-buscar').value = prefsGuardadas.prefGenero || 'any';
-    document.getElementById('pref-pais').value          = prefsGuardadas.pais || '';
+    _setRadio('genero-propio', prefsGuardadas.genero || 'M');
+    _setRadio('genero-buscar', prefsGuardadas.prefGenero || 'any');
+    _setRadio('pais', prefsGuardadas.pais || '');
   }
+
+  // Pro-gate: bloquear chip de Mujeres si no es premium
+  _aplicarProGate();
 
   // Si ya hay prefs guardadas, ir directo al matchmaking; si no, mostrar el panel
   if (prefsGuardadas) {
@@ -108,6 +111,36 @@ async function iniciarApp() {
 // ============================================================
 // PREFERENCIAS
 // ============================================================
+function _setRadio(name, value) {
+  const el = document.querySelector(`input[name="${name}"][value="${value}"]`);
+  if (el) el.checked = true;
+}
+
+function _getRadio(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? el.value : null;
+}
+
+function _aplicarProGate() {
+  const chip = document.getElementById('chip-mujeres');
+  if (!chip) return;
+  const input = chip.querySelector('input');
+  if (estado.isPremium) {
+    chip.classList.remove('pref-chip--locked');
+    input.disabled = false;
+  } else {
+    chip.classList.add('pref-chip--locked');
+    input.disabled = true;
+    chip.title = 'Solo disponible para usuarios Pro';
+    chip.addEventListener('click', (e) => {
+      if (!estado.isPremium) {
+        e.preventDefault();
+        mostrarToast('Solo usuarios Pro pueden filtrar por Mujeres');
+      }
+    });
+  }
+}
+
 function leerPrefs() {
   const genero    = localStorage.getItem('user_gender');
   const prefGenero = localStorage.getItem('pref_gender');
@@ -133,9 +166,17 @@ function ocultarPanelPrefs() {
 }
 
 function onStartSearch() {
-  const genero    = document.getElementById('pref-genero-propio').value;
-  const prefGenero = document.getElementById('pref-genero-buscar').value;
-  const pais      = document.getElementById('pref-pais').value;
+  const genero    = _getRadio('genero-propio') || 'M';
+  let prefGenero  = _getRadio('genero-buscar') || 'any';
+  const pais      = _getRadio('pais') || '';
+
+  // Pro-gate: si intentan filtrar Mujeres sin ser premium, caer a "any"
+  if (prefGenero === 'F' && !estado.isPremium) {
+    prefGenero = 'any';
+    _setRadio('genero-buscar', 'any');
+    mostrarToast('Solo usuarios Pro pueden filtrar por Mujeres');
+  }
+
   estado.prefs = { genero, prefGenero, pais };
   guardarPrefs(estado.prefs);
   ocultarPanelPrefs();
