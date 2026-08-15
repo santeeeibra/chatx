@@ -7,10 +7,15 @@ Tecnologías principales: HTML/JS/CSS vainilla, Ably Realtime para signaling, We
 ## Estado Actual: Fases 1 a 4 Completadas 🚀
 Las fases de Video Chat Core, UX Polish, Moderation y Age gate & auth están 100% terminadas.
 
-## Fase Inmediata: Fase 5 (Monetización) — 1/2 Completado
+## Fase 5 Completada: Monetización ✅
 - ✅ **Premium feature gates:** Cooldown 30s para free, sin límite para premium. Banner de upgrade + premium.html con landing page ($4.99/mes, CCBill).
-- 🔲 **CCBill integration:** Desarrollar webhook serverless para procesar el ping de CCBill y actualizar el estado del usuario a 'premium' en la base de datos tras un pago exitoso.
-- *Instrucción para Claude Code:* Continuar con CCBill webhook serverless.
+- ✅ **CCBill integration:** Webhook serverless `/api/ccbill-webhook.js` con verificación de digest MD5. Migración SQL para columnas `premium_until` y `ccbill_subscription_id`. `.env.example` documentado.
+
+## Pendiente (configuración externa)
+- Completar `CCBILL_ACCT`, `CCBILL_SUBACC`, `CCBILL_FORM_ID` en `premium.html`
+- Añadir env vars en Vercel dashboard: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `CCBILL_SALT`
+- Ejecutar migración SQL en Supabase: `supabase/migrations/20260814_premium_columns.sql`
+- Configurar URL del webhook en CCBill dashboard: `https://tu-dominio.vercel.app/api/ccbill-webhook`
 
 ## ⚠️ PROTOCOLO AUTOMÁTICO DE FIN DE TAREA
 Cada vez que el usuario te pida implementar un paso y lo finalices con éxito, DEBES ejecutar este flujo automáticamente y sin que el usuario te lo pida:

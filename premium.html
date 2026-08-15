@@ -159,14 +159,45 @@
     </div>
   </main>
 
-  <script>
-    // Replace # with the actual CCBill FlexForm URL when available
-    document.getElementById('btn-subscribe').addEventListener('click', (e) => {
-      const ccbillUrl = ''; // TODO: set CCBill FlexForm URL
-      if (!ccbillUrl) {
-        e.preventDefault();
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script type="module">
+    import { CONFIG } from './js/config.js';
+
+    const CCBILL_ACCT    = '';  // TODO: your CCBill clientAccnum
+    const CCBILL_SUBACC  = '';  // TODO: your CCBill clientSubacc
+    const CCBILL_FORM_ID = '';  // TODO: your CCBill FlexForm ID
+
+    const btn = document.getElementById('btn-subscribe');
+
+    async function getUserEmail() {
+      const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+      const { data } = await sb.auth.getSession();
+      return data.session?.user?.email ?? '';
+    }
+
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+
+      if (!CCBILL_ACCT || !CCBILL_FORM_ID) {
         alert('Pago próximamente disponible.');
+        return;
       }
+
+      const email = await getUserEmail();
+      const params = new URLSearchParams({
+        clientAccnum:    CCBILL_ACCT,
+        clientSubacc:    CCBILL_SUBACC,
+        initialPrice:    '4.99',
+        initialPeriod:   '30',
+        recurringPrice:  '4.99',
+        recurringPeriod: '30',
+        rebills:         '99',
+        currencyCode:    '840',
+        UDF01:           email,
+      });
+
+      const url = `https://api.ccbill.com/wap-frontflex/flexforms/${CCBILL_FORM_ID}?${params}`;
+      window.location.href = url;
     });
   </script>
 </body>
