@@ -190,6 +190,7 @@
   },
   "active": "7b3fcb6a2eaf97d3",
   "lastOpenFiles": [
+    "js/sounds.js",
     "js/app.js.tmp.20428.e32aa345a7c5",
     "js/app.js.tmp.20428.621c85d53f39",
     "js/app.js.tmp.20428.8b77ae192dfb",
@@ -200,7 +201,6 @@
     "app.html.tmp.20428.030952c74cf5",
     "js/matchmaking.js.tmp.20428.b28ed561af74",
     "js/matchmaking.js.tmp.20428.7be744437668",
-    "js/matchmaking.js.tmp.20428.e6fecd5f3338",
     "README.md",
     "CLAUDE.md",
     "ChatX/Tareas-Cline.md",

@@ -123,6 +123,7 @@ a { color: inherit; text-decoration: none; }
 
 /* Icon button */
 .icon-btn {
+  position: relative;
   background: transparent;
   border: 1.5px solid var(--border);
   color: var(--text-muted);
@@ -137,6 +138,23 @@ a { color: inherit; text-decoration: none; }
 }
 .icon-btn:hover { border-color: var(--text-muted); color: var(--text); }
 .icon-btn.muted { background: var(--danger); border-color: var(--danger); color: #fff; }
+/* Botón de efectos de sonido: muted = icono apagado con línea diagonal (sin fondo rojo) */
+.icon-btn--sounds.muted {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-faint);
+}
+.icon-btn--sounds.muted svg { opacity: .45; }
+.icon-btn--sounds.muted::after {
+  content: '';
+  position: absolute;
+  width: 1.6px;
+  height: 20px;
+  background: var(--danger);
+  border-radius: 2px;
+  transform: rotate(-45deg);
+  opacity: .75;
+}
 .icon-btn:active { transform: scale(.92); }
 
 /* Badge */
@@ -179,6 +197,24 @@ a { color: inherit; text-decoration: none; }
 @keyframes spinner-glow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(109,40,217,.25); }
   50%      { box-shadow: 0 0 16px 4px rgba(109,40,217,.35); }
+}
+
+/* Cuenco del spinner (Double-Bezel): hairline + halo radial sutil detrás del anillo */
+.spinner-shell {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.spinner-shell::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.09);
+  background: radial-gradient(circle, rgba(109,40,217,.06) 0%, transparent 68%);
 }
 
 /* Status badge */
@@ -1062,6 +1098,18 @@ a { color: inherit; text-decoration: none; }
 
 .prefs-searching.hidden { display: none; }
 
+/* Entrada del estado de búsqueda: fade-up + blur en cascada (solo transform/opacity/filter) */
+@keyframes search-fade-up {
+  from { opacity: 0; transform: translateY(14px); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+.prefs-searching:not(.hidden) > * {
+  animation: search-fade-up .7s cubic-bezier(.22, 1, .36, 1) both;
+}
+.prefs-searching:not(.hidden) > *:nth-child(2) { animation-delay: .08s; }
+.prefs-searching:not(.hidden) > *:nth-child(3) { animation-delay: .16s; }
+.prefs-searching:not(.hidden) > *:nth-child(4) { animation-delay: .24s; }
+
 .search-relax {
   font-size: .8rem;
   color: var(--accent);
@@ -1078,9 +1126,11 @@ a { color: inherit; text-decoration: none; }
 }
 
 .searching-title {
-  font-size: 1.15rem;
-  font-weight: 600;
-  letter-spacing: .02em;
+  font-size: .95rem;
+  font-weight: 300;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  margin-top: .25rem;
   color: var(--fg);
 }
 

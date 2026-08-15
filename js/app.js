@@ -24,6 +24,15 @@ import {
   publishIceCandidate,
   cleanupably,
 } from './ably-signaling.js';
+import {
+  initAudio,
+  playSearching,
+  stopSearching,
+  playConnected,
+  playDisconnected,
+  getSoundsEnabled,
+  setSoundsEnabled,
+} from './sounds.js';
 
 // ============================================================
 // ESTADO GLOBAL
@@ -54,6 +63,8 @@ const ui = {
   btnReportar:    document.getElementById('btn-reportar'),
   btnMute:        document.getElementById('btn-mute'),
   btnCam:         document.getElementById('btn-cam'),
+  btnSounds:      document.getElementById('btn-sounds'),
+  soundsMuted:    !getSoundsEnabled(),
 };
 
 // ============================================================
@@ -79,6 +90,8 @@ async function iniciarApp() {
   ui.btnReportar.addEventListener('click', reportar);
   ui.btnMute.addEventListener('click', toggleMute);
   ui.btnCam.addEventListener('click', toggleCam);
+  ui.btnSounds?.addEventListener('click', toggleSounds);
+  _refrescarBtnSonidos();
 
   document.getElementById('btn-start-search').addEventListener('click', onStartSearch);
   document.getElementById('btn-change-prefs').addEventListener('click', mostrarPanelPrefs);
@@ -166,6 +179,7 @@ function ocultarPanelPrefs() {
 }
 
 function onStartSearch() {
+  initAudio(); // primer gesto del usuario → habilita audio (autoplay policy)
   const genero    = _getRadio('genero-propio') || 'M';
   let prefGenero  = _getRadio('genero-buscar') || 'any';
   const pais      = _getRadio('pais') || '';
@@ -513,6 +527,27 @@ async function toggleCam() {
 }
 
 // ============================================================
+// EFECTOS DE SONIDO (mute del botón del header)
+// ============================================================
+function toggleSounds() {
+  initAudio(); // el click es un gesto del usuario → habilita audio
+  const estadoSonido = getSoundsEnabled();
+  setSoundsEnabled(!estadoSonido);
+  if (estadoSonido) stopSearching();
+  ui.soundsMuted = estadoSonido;
+  _refrescarBtnSonidos();
+}
+
+function _refrescarBtnSonidos() {
+  if (!ui.btnSounds) return;
+  const muted = !getSoundsEnabled();
+  ui.soundsMuted = muted;
+  ui.btnSounds.classList.toggle('muted', muted);
+  ui.btnSounds.setAttribute('aria-pressed', String(muted));
+  ui.btnSounds.title = muted ? 'Activar efectos de sonido' : 'Silenciar efectos de sonido';
+}
+
+// ============================================================
 // PARTNER INFO BADGE
 // ============================================================
 const PAIS_FLAGS = {
@@ -598,6 +633,15 @@ function setStatus(nuevoEstado) {
   // Cualquier cambio de estado limpia el aviso de "no hay pareja"
   clearTimeout(_searchTimeout);
   document.getElementById('search-error')?.classList.add('hidden');
+
+  // Efectos de sonido por estado (cualquier transición corta el radar, sin loops huérfanos)
+  switch (nuevoEstado) {
+    case 'searching':    playSearching();                       break;
+    case 'connecting':   stopSearching();                       break;
+    case 'connected':    stopSearching(); playConnected();      break;
+    case 'disconnected': stopSearching(); playDisconnected();   break;
+    default:             stopSearching();                       break;
+  }
 
   const placeholder = document.getElementById('placeholder-remote');
   ui.statusDot.className = 'status-dot';

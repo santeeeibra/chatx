@@ -56,3 +56,4 @@ ABLY_API_KEY · SUPABASE_URL · SUPABASE_ANON_KEY
 - Moderación: 1er reporte → ban 24h → 2do → ban permanente
 - PWA, no app nativa (evita App Store)
 - Fase 4 (2026-08-15): reportUser(fingerprint) en reportes.js, checkBan al entrar a la cola en matchmaking.js, overlay de ban reutilizado
+- Efectos de sonido (2026-08-15): sounds.js sintetiza audio en runtime via Web Audio API (sin assets). Radar en searching, chime en connected, eco en disconnected. Botón #btn-sounds en header (mute persistente localStorage sounds-enabled, activo por defecto). Auto-init AudioContext en primer click del usuario. Spinner enmarcado (.spinner-shell) + searching-title uppercase wide + fade-up en cascada.
