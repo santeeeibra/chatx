@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Política de Privacidad - ChatX</title>
+<style>
+  body { background:#0a0a0a; color:#e5e5e5; font-family:'Segoe UI',Arial,sans-serif; max-width:800px; margin:0 auto; padding:40px 20px; line-height:1.7; }
+  h1 { color:#a855f7; border-bottom:2px solid #a855f7; padding-bottom:12px; }
+  h2 { color:#c084fc; margin-top:32px; }
+  a { color:#c084fc; }
+  table { width:100%; border-collapse:collapse; margin:16px 0; }
+  td, th { border:1px solid #333; padding:10px; text-align:left; }
+  th { background:#1a1a1a; }
+  footer { margin-top:48px; font-size:0.85em; color:#666; }
+</style>
+</head>
+<body>
+<h1>Política de Privacidad — ChatX</h1>
+<p>Última actualización: 15 de agosto de 2026</p>
+
+<h2>1. Qué datos recopilamos</h2>
+<table>
+<tr><th>Dato</th><th>De quién</th><th>Para qué</th></tr>
+<tr><td>Huella digital del dispositivo (fingerprint)</td><td>Todos los usuarios, incluso anónimos</td><td>Identificar dispositivos para aplicar bans y prevenir abuso</td></tr>
+<tr><td>Email y contraseña (encriptada)</td><td>Usuarios registrados</td><td>Autenticación de cuenta</td></tr>
+<tr><td>Edad estimada (número)</td><td>Usuarios registrados</td><td>Verificar mayoría de edad</td></tr>
+<tr><td>Registros de sesión (fecha, hora, sanciones)</td><td>Todos los usuarios</td><td>Moderación y aplicación de bans</td></tr>
+<tr><td>Datos de pago</td><td>Usuarios Premium</td><td>Procesados exclusivamente por CCBill</td></tr>
+</table>
+
+<h2>2. Verificación facial de edad</h2>
+<p>Al registrarte, procesamos una imagen de tu rostro mediante el servicio Face++ para estimar tu edad. <strong>No almacenamos la imagen facial en ningún momento</strong>: solo se guarda el resultado (edad estimada aprobada) en tu perfil. La imagen se descarta inmediatamente después del análisis.</p>
+
+<h2>3. No grabamos video</h2>
+<p>ChatX no graba, almacena ni tiene acceso posterior a las transmisiones de video entre usuarios. Las conexiones son en tiempo real (peer-to-peer / vía servicio de señalización) y no quedan registradas.</p>
+
+<h2>4. Con quién compartimos datos</h2>
+<ul>
+  <li><strong>Supabase:</strong> almacenamiento de base de datos, autenticación</li>
+  <li><strong>Face++:</strong> procesamiento momentáneo de verificación de edad (sin retención de imagen)</li>
+  <li><strong>CCBill:</strong> procesamiento de pagos de suscripción Premium (nunca vemos ni almacenamos datos de tarjetas)</li>
+  <li><strong>FingerprintJS:</strong> generación de identificador de dispositivo</li>
+</ul>
+<p>No vendemos ni compartimos tus datos con terceros para fines publicitarios.</p>
+
+<h2>5. Tus derechos</h2>
+<p>Podés solicitar la eliminación de tu cuenta y datos asociados en cualquier momento contactándonos por los medios indicados en la Plataforma. Los registros de sanciones vinculados a tu fingerprint pueden conservarse por razones de seguridad incluso tras la eliminación de la cuenta.</p>
+
+<h2>6. Seguridad</h2>
+<p>Utilizamos encriptación estándar de la industria (a través de Supabase) para proteger contraseñas y datos sensibles. El acceso a la base de datos está restringido mediante políticas de seguridad a nivel de fila (RLS).</p>
+
+<h2>7. Menores de edad</h2>
+<p>ChatX no está dirigido a menores de 18 años. Si detectamos una cuenta de un menor, será eliminada inmediatamente junto con todos sus datos.</p>
+
+<h2>8. Cambios en esta política</h2>
+<p>Podemos actualizar esta Política de Privacidad periódicamente. Te notificaremos cambios relevantes a través de la Plataforma.</p>
+
+<h2>9. Contacto</h2>
+<p>Para consultas sobre privacidad o para ejercer tus derechos sobre tus datos, contactanos a través de los medios indicados en la Plataforma.</p>
+
+<footer>ChatX © 2026 — Todos los derechos reservados.</footer>
+</body>
+</html>
