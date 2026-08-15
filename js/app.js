@@ -403,6 +403,8 @@ function onStartSearch() {
   };
   guardarPrefs({ genero, prefGenero, pais });
   ocultarPanelPrefs();
+  // Búsqueda deliberada del usuario → salir del estado de pausa si estaba activo
+  estado.pausado = false;
   iniciarMatchmaking();
 }
 
@@ -484,6 +486,9 @@ function _iniciarModoAnonimo() {
 let _searchTimeout = null;
 
 async function iniciarMatchmaking() {
+  // Reset pause UI (la búsqueda deliberada la re-reactiva)
+  document.getElementById('prefs-searching')?.classList.remove('is-paused');
+  if (ui.btnPause) ui.btnPause.textContent = '⏸ Pausar';
   // Asegurar que se muestra la pantalla de búsqueda, no el panel de prefs
   document.getElementById('prefs-panel')?.classList.add('hidden');
   document.getElementById('prefs-searching')?.classList.remove('hidden');
@@ -535,7 +540,7 @@ async function iniciarMatchmaking() {
     }
     console.error('[App] Error en matchmaking:', err);
     setStatus('disconnected');
-    setTimeout(iniciarMatchmaking, 3000);
+    if (!estado.pausado) setTimeout(iniciarMatchmaking, 3000);
   }
 }
 
@@ -686,6 +691,7 @@ async function siguiente() {
   estado.procesando = true;
   // Reset pause state when moving to next
   estado.pausado = false;
+  document.getElementById('prefs-searching')?.classList.remove('is-paused');
   if (ui.btnPause) ui.btnPause.textContent = '⏸ Pausar';
 
   ui.btnReportar.disabled = true;
@@ -841,10 +847,13 @@ function _refrescarBtnSonidos() {
 // PAUSE / RESUME BÚSQUEDA
 // ============================================================
 function togglePausaBusqueda() {
+  const searcher = document.getElementById('prefs-searching');
   if (!estado.pausado) {
     estado.pausado = true;
     ui.btnPause.textContent = '▶ Reanudar';
     setStatus('disconnected');
+    searcher?.classList.add('is-paused');
+    if (ui.placeholderTxt) ui.placeholderTxt.textContent = 'Búsqueda pausada';
     // Limpiar slot si estamos en cola
     if (estado.slotId) {
       limpiarSlot(estado.slotId);
@@ -854,12 +863,15 @@ function togglePausaBusqueda() {
     clearTimeout(_searchTimeout);
     document.getElementById('search-error')?.classList.add('hidden');
     const relaxEl = document.getElementById('search-relax');
-    if (relaxEl) { relaxEl.textContent = 'Búsqueda pausada.'; relaxEl.classList.remove('hidden'); }
+    if (relaxEl) { relaxEl.textContent = ''; relaxEl.classList.add('hidden'); }
   } else {
     estado.pausado = false;
     if (ui.btnPause) ui.btnPause.textContent = '⏸ Pausar';
+    searcher?.classList.remove('is-paused');
+    if (ui.placeholderTxt) ui.placeholderTxt.textContent = 'Buscando pareja';
     const relaxEl = document.getElementById('search-relax');
     if (relaxEl) { relaxEl.textContent = ''; relaxEl.classList.add('hidden'); }
+    // Limpia slots/latencia ably de la pausa y re-inicia búsqueda
     iniciarMatchmaking();
   }
 }
