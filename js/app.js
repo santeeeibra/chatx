@@ -24,6 +24,7 @@ import {
   publishIceCandidate,
   cleanupably,
 } from './ably-signaling.js';
+import { VoiceActivityDetector } from './voice-activity.js';
 import {
   initAudio,
   playSearching,
@@ -33,6 +34,9 @@ import {
   getSoundsEnabled,
   setSoundsEnabled,
 } from './sounds.js';
+import { ReactionsManager } from './reactions.js';
+import { StickersManager } from './stickers.js';
+import { VoiceMessagesManager, renderVoiceMsg } from './voice-messages.js';
 
 // ============================================================
 // ESTADO GLOBAL
@@ -48,6 +52,12 @@ const estado = {
   prefs:             null,   // { genero, prefGenero, pais }
   pausado:           false,
   chatChannel:       null,
+  vadLocal:          null,
+  vadRemote:         null,
+  anonymousMode:     false,
+  reactions:         null,
+  stickers:          null,
+  voiceMsgs:         null,
 };
 
 // ============================================================
@@ -72,6 +82,12 @@ const ui = {
   btnChatSend:    document.getElementById('btn-chat-send'),
   chatMessages:   document.getElementById('chat-messages'),
   chatPlaceholder:document.getElementById('chat-placeholder'),
+  btnSticker:     document.getElementById('btn-sticker'),
+  btnVoiceMsg:    document.getElementById('btn-voice-msg'),
+  stickerPanel:   document.getElementById('sticker-panel'),
+  reactionsBar:   document.getElementById('reactions-bar'),
+  reactionsOvl:   document.getElementById('reactions-overlay'),
+  anonCheckbox:   document.getElementById('pref-anonymous'),
   soundsMuted:    !getSoundsEnabled(),
 };
 
@@ -93,6 +109,33 @@ async function iniciarApp() {
   // Video local (persiste entre sesiones)
   estado.webrtc = new WebRTCManager();
   await estado.webrtc.initLocalStream();
+  _iniciarVADLocal();
+
+  // Reactions
+  estado.reactions = new ReactionsManager();
+  estado.reactions.init(ui.reactionsOvl, ui.reactionsBar);
+
+  // Stickers — onSend envía sticker como chat
+  estado.stickers = new StickersManager(estado.isPremium, (emoji) => {
+    if (!estado.chatChannel || !estado.conectado) return;
+    agregarMensajeChat(emoji, true);
+    estado.chatChannel.publish('message', { type: 'sticker', emoji, fingerprint: estado.fingerprint });
+  });
+  if (ui.btnSticker && ui.stickerPanel) {
+    estado.stickers.init(ui.stickerPanel, ui.btnSticker);
+  }
+
+  // Voice messages
+  estado.voiceMsgs = new VoiceMessagesManager(estado.fingerprint, ({ url, duration, mine }) => {
+    if (ui.chatMessages) {
+      ui.chatMessages.appendChild(renderVoiceMsg(url, duration, mine));
+      ui.chatMessages.scrollTop = ui.chatMessages.scrollHeight;
+    }
+  });
+  if (ui.btnVoiceMsg) estado.voiceMsgs.init(ui.btnVoiceMsg);
+
+  // Anonymous mode
+  _iniciarModoAnonimo();
 
   ui.btnSiguiente.addEventListener('click', siguiente);
   ui.btnReportar.addEventListener('click', reportar);
@@ -113,6 +156,9 @@ async function iniciarApp() {
   window.addEventListener('beforeunload', () => {
     if (estado.slotId) limpiarSlot(estado.slotId);
   });
+
+  // Dropdown de país (banderas reales)
+  initCountryDropdown();
 
   // Cargar prefs guardadas en los radio buttons
   const prefsGuardadas = leerPrefs();
@@ -140,7 +186,11 @@ async function iniciarApp() {
 // ============================================================
 function _setRadio(name, value) {
   const sel = document.querySelector(`select[name="${name}"]`);
-  if (sel) { sel.value = value; return; }
+  if (sel) {
+    sel.value = value;
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
   const el = document.querySelector(`input[name="${name}"][value="${value}"]`);
   if (el) el.checked = true;
 }
@@ -150,6 +200,106 @@ function _getRadio(name) {
   if (sel) return sel.value;
   const el = document.querySelector(`input[name="${name}"]:checked`);
   return el ? el.value : null;
+}
+
+// ============================================================
+// DROPDOWN DE PAÍS (banderas reales en lugar de emojis)
+// ============================================================
+const FLAG_BASE_URL = 'https://flagpedia.net/data/flags/h80/';
+const EMOJI_FLAG_RX = /^[\u{1F1E6}-\u{1F1FF}]{2}\s*/u;
+
+function initCountryDropdown() {
+  const wrap = document.getElementById('country-dropdown');
+  const select = document.getElementById('pref-pais');
+  const trigger = document.getElementById('country-dropdown-trigger');
+  const menu = document.getElementById('country-dropdown-menu');
+  const flagImg = document.getElementById('country-dropdown-flag');
+  const globeSpan = document.getElementById('country-dropdown-globe');
+  const labelEl = document.getElementById('country-dropdown-label');
+  if (!wrap || !select || !trigger || !menu) return;
+
+  // Construir el menú desde el <select> nativo (fuente única de verdad)
+  for (const node of select.children) {
+    if (node.tagName === 'OPTGROUP') {
+      const header = document.createElement('li');
+      header.className = 'country-dropdown__group';
+      header.textContent = node.label;
+      menu.appendChild(header);
+      for (const opt of node.children) menu.appendChild(crearItem(opt));
+    } else if (node.tagName === 'OPTION') {
+      menu.appendChild(crearItem(node));
+    }
+  }
+
+  function crearItem(opt) {
+    const li = document.createElement('li');
+    li.className = 'country-dropdown__item';
+    li.dataset.value = opt.value;
+    li.setAttribute('role', 'option');
+
+    if (opt.value) {
+      const img = document.createElement('img');
+      img.className = 'country-dropdown__flag';
+      img.src = `${FLAG_BASE_URL}${opt.value.toLowerCase()}.png`;
+      img.alt = '';
+      img.width = 24;
+      img.height = 16;
+      img.loading = 'lazy';
+      li.appendChild(img);
+    } else {
+      const globe = document.createElement('span');
+      globe.className = 'country-dropdown__globe';
+      globe.textContent = '🌐';
+      li.appendChild(globe);
+    }
+    li.appendChild(document.createTextNode(!opt.value ? 'Otro / No especificar' : opt.textContent.replace(EMOJI_FLAG_RX, '')));
+    return li;
+  }
+
+  function sincronizar() {
+    const code = select.value || '';
+    const selected = menu.querySelector(`.country-dropdown__item[data-value="${CSS.escape(code)}"]`);
+
+    // Label + bandera del trigger
+    if (code) {
+      flagImg.src = `${FLAG_BASE_URL}${code.toLowerCase()}.png`;
+      flagImg.removeAttribute('hidden');
+      globeSpan.hidden = true;
+      labelEl.textContent = selected ? selected.textContent.trim() : code;
+    } else {
+      flagImg.hidden = true;
+      globeSpan.hidden = false;
+      labelEl.textContent = 'Otro / No especificar';
+    }
+
+    // Marcar item activo
+    for (const item of menu.querySelectorAll('.country-dropdown__item')) {
+      item.classList.toggle('is-selected', item.dataset.value === code);
+    }
+  }
+
+  function abrir() { menu.classList.remove('hidden'); trigger.setAttribute('aria-expanded', 'true'); }
+  function cerrar() { menu.classList.add('hidden'); trigger.setAttribute('aria-expanded', 'false'); }
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.classList.contains('hidden') ? abrir() : cerrar();
+  });
+  menu.addEventListener('click', (e) => {
+    const item = e.target.closest('.country-dropdown__item');
+    if (!item) return;
+    select.value = item.dataset.value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    sincronizar();
+    cerrar();
+  });
+  document.addEventListener('click', (e) => {
+    if (!wrap.contains(e.target)) cerrar();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') cerrar();
+  });
+  select.addEventListener('change', sincronizar);
+  sincronizar();
 }
 
 function _aplicarProGate() {
@@ -209,8 +359,12 @@ function onStartSearch() {
     mostrarToast('Solo usuarios Pro pueden filtrar por Mujeres');
   }
 
-  estado.prefs = { genero, prefGenero, pais };
-  guardarPrefs(estado.prefs);
+  estado.prefs = {
+    genero:     estado.anonymousMode ? null : genero,
+    prefGenero,
+    pais:       estado.anonymousMode ? null : pais,
+  };
+  guardarPrefs({ genero, prefGenero, pais });
   ocultarPanelPrefs();
   iniciarMatchmaking();
 }
@@ -240,6 +394,50 @@ async function checkPremium() {
     .eq('user_id', session.user.id)
     .single();
   return data?.is_premium === true;
+}
+
+// ============================================================
+// VAD (Voice Activity Detection)
+// ============================================================
+function _iniciarVADLocal() {
+  const stream = estado.webrtc?.localStream;
+  if (!stream) return;
+  estado.vadLocal?.destroy();
+  estado.vadLocal = new VoiceActivityDetector(stream, (speaking) => {
+    document.getElementById('speaking-ring-local')?.classList.toggle('active', speaking);
+  });
+}
+
+function _iniciarVADRemoto(stream) {
+  estado.vadRemote?.destroy();
+  estado.vadRemote = new VoiceActivityDetector(stream, (speaking) => {
+    document.getElementById('speaking-ring-remote')?.classList.toggle('active', speaking);
+  });
+}
+
+// ============================================================
+// MODO ANÓNIMO
+// ============================================================
+function _iniciarModoAnonimo() {
+  if (!ui.anonCheckbox) return;
+  const saved = localStorage.getItem('anonymous_mode') === 'true';
+  ui.anonCheckbox.checked = saved;
+  estado.anonymousMode = saved;
+
+  if (!estado.isPremium) {
+    ui.anonCheckbox.disabled = true;
+    document.getElementById('anon-toggle-label')?.setAttribute('title', 'Solo usuarios Premium');
+  }
+
+  ui.anonCheckbox.addEventListener('change', () => {
+    if (!estado.isPremium) {
+      ui.anonCheckbox.checked = false;
+      mostrarToast('El modo anónimo es solo para usuarios Premium');
+      return;
+    }
+    estado.anonymousMode = ui.anonCheckbox.checked;
+    localStorage.setItem('anonymous_mode', String(estado.anonymousMode));
+  });
 }
 
 // ============================================================
@@ -319,11 +517,12 @@ async function iniciarWebRTC(match) {
   };
 
   // Cuando llegue el stream remoto → marcar como conectado
-  estado.webrtc.onRemoteStream = () => {
+  estado.webrtc.onRemoteStream = (remoteStream) => {
     estado.conectado = true;
     setStatus('connected');
     ui.btnReportar.disabled = false;
     habilitarChat();
+    _iniciarVADRemoto(remoteStream);
     console.log('[App] Stream remoto recibido. Canal:', slotId, '| Rol:', role);
   };
 
@@ -368,6 +567,21 @@ async function iniciarWebRTC(match) {
 
       case 'chat':
         if (data.text) agregarMensajeChat(data.text, false);
+        break;
+
+      case 'reaction':
+        if (data.emoji) estado.reactions?.receive(data.emoji);
+        break;
+
+      case 'sticker':
+        if (data.emoji) agregarMensajeChat(data.emoji, false);
+        break;
+
+      case 'voice-msg':
+        if (data.url && ui.chatMessages) {
+          ui.chatMessages.appendChild(renderVoiceMsg(data.url, data.duration || 0, false));
+          ui.chatMessages.scrollTop = ui.chatMessages.scrollHeight;
+        }
         break;
     }
   });
@@ -616,11 +830,20 @@ function habilitarChat() {
   if (ui.chatInput) ui.chatInput.disabled = false;
   if (ui.btnChatSend) ui.btnChatSend.disabled = false;
   if (ui.chatPlaceholder) ui.chatPlaceholder.remove();
+  if (ui.btnSticker) ui.btnSticker.disabled = false;
+  estado.reactions?.setChannel(estado.chatChannel, estado.fingerprint);
+  estado.voiceMsgs?.setChannel(estado.chatChannel);
 }
 
 function deshabilitarChat() {
   if (ui.chatInput) { ui.chatInput.disabled = true; ui.chatInput.value = ''; }
   if (ui.btnChatSend) ui.btnChatSend.disabled = true;
+  if (ui.btnSticker) ui.btnSticker.disabled = true;
+  estado.reactions?.disable();
+  estado.voiceMsgs?.disable();
+  estado.stickers?.close();
+  estado.vadRemote?.destroy();
+  estado.vadRemote = null;
   // Reset messages
   if (ui.chatMessages) {
     ui.chatMessages.innerHTML = '<p class="chat-placeholder" id="chat-placeholder">El chat estará disponible cuando te conectes con alguien.</p>';
@@ -672,7 +895,9 @@ function mostrarInfoPareja(pais, genero) {
 
   if (!pais && !genero) { badge.classList.add('hidden'); return; }
 
-  flagEl.textContent = pais && PAIS_FLAGS[pais] ? PAIS_FLAGS[pais] : '';
+  flagEl.innerHTML = pais && PAIS_FLAGS[pais]
+    ? `<img class="partner-flag-img" src="${FLAG_BASE_URL}${pais.toLowerCase()}.png" alt="" width="24" height="16">`
+    : '';
   labelEl.textContent = genero && GENERO_LABELS[genero] ? GENERO_LABELS[genero] : '';
   badge.classList.remove('hidden');
 
