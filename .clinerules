@@ -1,0 +1,16 @@
+# .clinerules
+
+## IGNORA SIEMPRE
+- node_modules/
+- .git/
+- dist/
+- *.log
+
+## LEE PRIMERO
+- CLAUDE.md  ← contexto completo del proyecto
+
+## COMPORTAMIENTO
+- No leas archivos que no sean necesarios para la tarea actual
+- No expliques lo que vas a hacer, hazlo directamente
+- Si necesitas contexto, pregunta antes de leer archivos
+- Prefiere edits quirúrgicos sobre rewrites completos

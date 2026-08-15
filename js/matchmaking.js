@@ -20,7 +20,7 @@
 
 import { supabase } from './supabase-client.js';
 import { CONFIG } from './config.js';
-import { initably, subscribeSignaling, cleanupably } from './ably-signaling.js';
+import { initably, getSignalingChannel, subscribeSignaling, cleanupably } from './ably-signaling.js';
 
 let _ablySubscriptionSlotId = null;
 
@@ -54,17 +54,25 @@ export async function buscarPareja(miFingerprint) {
       .maybeSingle();
 
     if (!error && tomado) {
-      console.log('[Matchmaking] Pareja encontrada. Slot:', tomado.id);
       const slotId = tomado.id;
       const channelName = tomado.channel_name;
       const remoteFingerprint = tomado.fingerprint_a;
+      console.log('[Match] Match found:', remoteFingerprint, '| slot:', slotId);
 
-      // Retornar datos para que la app continúe y procese la oferta
+      // Notificar a User A que encontramos pareja via Ably
+      initably();
+      const ch = getSignalingChannel(slotId);
+      if (ch) {
+        await ch.attach();
+        await ch.publish('message', { type: 'match-found', fingerprint: miFingerprint });
+        console.log('[Match] Confirmed');
+      }
+
       return {
         channelName,
         slotId,
         remoteFingerprint,
-        role: 'subscriber',
+        role: 'publisher',
       };
     }
 
@@ -85,45 +93,38 @@ export async function buscarPareja(miFingerprint) {
   if (insertError) throw insertError;
 
   const slotId = miSlot.id;
-  console.log('[Matchmaking] Slot creado. Esperando pareja...', slotId);
+  console.log('[Match] Entered queue:', miFingerprint, '| slot:', slotId);
 
-  // 4. Suscribirse al canal Ably para esperar que alguien más se una
-  // Esto reemplaza a _esperarParejaConRealtime usando Supabase Realtime
   return new Promise((resolve, reject) => {
-    // Inicializar Ably si no está inicializado
     initably();
 
-    // Suscribirse al canal Ably 'room_${slotId}'
-    subscribeSignaling(
-      slotId,
-      // onOffer: recibido cuando el otro usuario envía la oferta SDP
-      (offerData) => {
-        console.log('[Ably Signaling] Oferta recibida desde fingerprint:', offerData.fingerprint);
-        // Resolver la promesa con los datos necesarios para continuar el flujo WebRTC
+    let resolved = false;
+
+    const onMatchMessage = (msgData) => {
+      if (resolved) return;
+      if (msgData.type === 'match-found' || msgData.type === 'offer') {
+        resolved = true;
+        clearTimeout(timeoutId);
+        console.log('[Match] Match found (incoming):', msgData.fingerprint);
+        console.log('[Match] Confirmed');
         resolve({
           channelName,
           slotId,
-          remoteFingerprint: offerData.fingerprint,
+          remoteFingerprint: msgData.fingerprint,
           role: 'subscriber',
-          // Incluir la SDP oferta para que app.js pueda crear la respuesta
-          ofertaSDP: offerData.sdp,
         });
-      },
-      // onAnswer: no usado en esta dirección en el flujo inicial
-      () => {},
-      // onIceCandidate: ICE candidates del otro usuario
-      (candidateData) => {
-        console.log('[Ably Signaling] ICE candidate recibido');
-        // Procesar ICE candidate en la conexión RTC (lo manejará app.js / agora-manager)
       }
-    );
+    };
 
-    // Timeout → nadie vino, limpiar slot y reintentar
+    subscribeSignaling(slotId, onMatchMessage, () => {}, () => {});
+
     const timeoutId = setTimeout(async () => {
-      console.log('[Matchmaking] Timeout Ably. Reintentando...');
+      if (resolved) return;
+      resolved = true;
+      console.log('[Matchmaking] Timeout. Reintentando...');
       cleanupably();
       await limpiarSlot(slotId);
-      resolve(buscarPareja(miFingerprint)); // reintentar
+      resolve(buscarPareja(miFingerprint));
     }, CONFIG.MATCHMAKING_TIMEOUT);
   });
 }

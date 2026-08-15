@@ -76,6 +76,7 @@ export function subscribeSignaling(slotId, onOffer, onAnswer, onIceCandidate) {
     if (!data || !data.type) return;
 
     switch (data.type) {
+      case 'match-found':
       case 'offer':
         if (onOffer) onOffer(data);
         break;

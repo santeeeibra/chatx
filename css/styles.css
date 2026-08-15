@@ -1,5 +1,5 @@
 /* ========================================
-   ChatX — Global Styles
+   CamReal — Global Styles
    Dark premium adult videochat theme
    ======================================== */
 
@@ -11,8 +11,8 @@
   --surface:      #0F0F1A;
   --card:         #14141F;
   --border:       #23234A;
-  --primary:      #7C3AED;
-  --primary-h:    #6D28D9;
+  --primary:      #6D28D9;
+  --primary-h:    #5B21B6;
   --accent:       #EC4899;
   --text:         #F0F0FF;
   --text-muted:   #6B7280;
@@ -56,6 +56,22 @@ a { color: inherit; text-decoration: none; }
 }
 .logo--sm { font-size: 1rem; }
 .logo__text { color: var(--text); }
+.logo__wordmark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .1rem;
+  line-height: 1.2;
+}
+.logo__tagline {
+  display: block;
+  font-size: .72rem;
+  font-weight: 500;
+  letter-spacing: .01em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.age-gate__content .logo__tagline { white-space: normal; }
 
 
 /* Buttons */
@@ -122,7 +138,7 @@ a { color: inherit; text-decoration: none; }
 /* Badge */
 .badge {
   display: inline-block;
-  background: rgba(124,58,237,.25);
+  background: rgba(109,40,217,.25);
   color: #A78BFA;
   font-size: .65rem;
   font-weight: 600;
@@ -182,7 +198,7 @@ a { color: inherit; text-decoration: none; }
   animation: pulse-green 2s infinite;
 }
 .status-dot--searching {
-  background: #7C3AED;
+  background: #6D28D9;
   animation: pulse-purple 1.2s infinite;
 }
 .status-dot--disconnected {
@@ -197,8 +213,8 @@ a { color: inherit; text-decoration: none; }
   50% { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
 }
 @keyframes pulse-purple {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,.4); }
-  50% { box-shadow: 0 0 0 6px rgba(124,58,237,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(109,40,217,.4); }
+  50% { box-shadow: 0 0 0 6px rgba(109,40,217,0); }
 }
 
 
@@ -225,7 +241,7 @@ a { color: inherit; text-decoration: none; }
   position: absolute;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(124,58,237,.18) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(109,40,217,.18) 0%, transparent 70%);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -266,7 +282,7 @@ a { color: inherit; text-decoration: none; }
 }
 .landing-heading em {
   font-style: normal;
-  background: linear-gradient(135deg, #7C3AED, #EC4899);
+  background: linear-gradient(135deg, #6D28D9, #EC4899);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -479,8 +495,8 @@ a { color: inherit; text-decoration: none; }
   justify-content: center;
   gap: .75rem;
   padding: .6rem 1.5rem;
-  background: linear-gradient(90deg, rgba(124,58,237,.15), rgba(236,72,153,.15));
-  border-top: 1px solid rgba(124,58,237,.3);
+  background: linear-gradient(90deg, rgba(109,40,217,.15), rgba(236,72,153,.15));
+  border-top: 1px solid rgba(109,40,217,.3);
   font-size: .85rem;
   color: var(--text-muted);
   flex-shrink: 0;
@@ -656,9 +672,9 @@ a { color: inherit; text-decoration: none; }
   font-size: .9rem;
   color: var(--text);
 }
-.modal-radio:hover { border-color: var(--primary); background: rgba(124,58,237,.08); }
+.modal-radio:hover { border-color: var(--primary); background: rgba(109,40,217,.08); }
 .modal-radio input[type="radio"] { accent-color: var(--primary); width: 16px; height: 16px; flex-shrink: 0; }
-.modal-radio:has(input:checked) { border-color: var(--primary); background: rgba(124,58,237,.15); }
+.modal-radio:has(input:checked) { border-color: var(--primary); background: rgba(109,40,217,.15); }
 
 .modal-textarea {
   background: var(--surface);
@@ -763,7 +779,7 @@ a { color: inherit; text-decoration: none; }
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7C3AED, #EC4899);
+  background: linear-gradient(135deg, #6D28D9, #EC4899);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -1,0 +1,10 @@
+{
+  "name": "CamReal",
+  "short_name": "CamReal",
+  "description": "CamReal — Video chat aleatorio con personas reales. Conectá al instante, gratis.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#08080F",
+  "theme_color": "#6D28D9"
+}
