@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatX Premium</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .premium-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .premium-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem 2rem;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .premium-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      background: linear-gradient(135deg, #7C3AED, #EC4899);
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .3rem .75rem;
+      border-radius: 99px;
+      margin-bottom: 1.25rem;
+    }
+    .premium-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: .5rem;
+      background: linear-gradient(135deg, #7C3AED, #EC4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .premium-price {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+    .premium-price strong {
+      font-size: 2.25rem;
+      color: var(--text);
+      font-weight: 700;
+    }
+    .premium-benefits {
+      list-style: none;
+      text-align: left;
+      margin-bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: .85rem;
+    }
+    .premium-benefits li {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      font-size: .95rem;
+      color: var(--text);
+    }
+    .benefit-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(124,58,237,.2), rgba(236,72,153,.2));
+      border: 1px solid rgba(124,58,237,.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1rem;
+    }
+    .benefit-coming {
+      font-size: .78rem;
+      color: var(--text-muted);
+      margin-left: auto;
+      background: rgba(255,255,255,.06);
+      padding: .15rem .5rem;
+      border-radius: 4px;
+    }
+    .btn--premium {
+      background: linear-gradient(135deg, #7C3AED, #EC4899);
+      color: #fff;
+      border: none;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: .85rem 1.5rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: opacity .15s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn--premium:hover { opacity: .9; }
+    .premium-footer {
+      margin-top: 1rem;
+      font-size: .78rem;
+      color: var(--text-faint);
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      color: var(--text-muted);
+      font-size: .85rem;
+      margin-bottom: 1.5rem;
+      transition: color .15s;
+    }
+    .back-link:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+  <main class="premium-page">
+    <a href="app.html" class="back-link">← Volver al chat</a>
+
+    <div class="premium-card">
+      <div class="premium-badge">⚡ Premium</div>
+
+      <h1 class="premium-title">ChatX Premium</h1>
+
+      <p class="premium-price"><strong>$4.99</strong> / mes</p>
+
+      <ul class="premium-benefits">
+        <li>
+          <span class="benefit-icon">⚡</span>
+          <span>Skips ilimitados — sin espera entre conexiones</span>
+        </li>
+        <li>
+          <span class="benefit-icon">🎥</span>
+          <span>Video HD 720p — calidad superior</span>
+        </li>
+        <li>
+          <span class="benefit-icon">🎯</span>
+          <span>Filtros de emparejamiento</span>
+          <span class="benefit-coming">Próximamente</span>
+        </li>
+      </ul>
+
+      <a href="#" class="btn--premium" id="btn-subscribe">Suscribirte ahora</a>
+
+      <p class="premium-footer">Procesado de forma segura por CCBill · Cancela cuando quieras</p>
+    </div>
+  </main>
+
+  <script>
+    // Replace # with the actual CCBill FlexForm URL when available
+    document.getElementById('btn-subscribe').addEventListener('click', (e) => {
+      const ccbillUrl = ''; // TODO: set CCBill FlexForm URL
+      if (!ccbillUrl) {
+        e.preventDefault();
+        alert('Pago próximamente disponible.');
+      }
+    });
+  </script>
+</body>
+</html>

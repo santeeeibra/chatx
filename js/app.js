@@ -35,6 +35,7 @@ const estado = {
   webrtc:            null,
   conectado:         false,
   procesando:        false,
+  isPremium:         false,
 };
 
 // ============================================================
@@ -64,6 +65,7 @@ async function iniciarApp() {
   console.log('[App] Fingerprint:', estado.fingerprint);
 
   await initAuth(estado.fingerprint);
+  estado.isPremium = await checkPremium();
 
   const ban = await checkBan(estado.fingerprint);
   if (ban) { mostrarBan(ban); return; }
@@ -82,6 +84,23 @@ async function iniciarApp() {
   });
 
   await iniciarMatchmaking();
+}
+
+// ============================================================
+// PREMIUM CHECK
+// ============================================================
+async function checkPremium() {
+  const { data: { session } } = await window.supabase
+    .createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY)
+    .auth.getSession();
+  if (!session?.user) return false;
+  const { data } = await window.supabase
+    .createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY)
+    .from('user_profiles')
+    .select('is_premium')
+    .eq('user_id', session.user.id)
+    .single();
+  return data?.is_premium === true;
 }
 
 // ============================================================
@@ -258,9 +277,12 @@ async function siguiente() {
   const remoteVideo = document.getElementById('remoteVideo');
   if (remoteVideo) remoteVideo.srcObject = null;
 
-  // Cooldown de 2 segundos antes de re-entrar a la cola
+  // Cooldown: 30s para free, 2s para premium
+  const cooldownSecs = estado.isPremium ? 2 : 30;
+  if (!estado.isPremium) mostrarUpgradeBanner(true);
+
   await new Promise((resolve) => {
-    let t = 2;
+    let t = cooldownSecs;
     ui.btnSiguiente.textContent = `Siguiente (${t}s)`;
     const iv = setInterval(() => {
       t--;
@@ -274,6 +296,7 @@ async function siguiente() {
     }, 1000);
   });
 
+  mostrarUpgradeBanner(false);
   estado.procesando = false;
   await iniciarMatchmaking();
 }
@@ -350,6 +373,14 @@ async function toggleCam() {
   const apagada = !videoTrack.enabled;
   ui.btnCam.classList.toggle('muted', apagada);
   ui.btnCam.title = apagada ? 'Activar cámara' : 'Apagar cámara';
+}
+
+// ============================================================
+// UPGRADE BANNER
+// ============================================================
+function mostrarUpgradeBanner(visible) {
+  const banner = document.getElementById('upgrade-banner');
+  if (banner) banner.classList.toggle('hidden', !visible);
 }
 
 // ============================================================

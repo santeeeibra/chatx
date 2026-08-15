@@ -279,7 +279,7 @@ const phaseColors = {
 };
 
 export default function ChatXChecklist() {
-  const [done, setDone] = useState({"1-1":true,"1-2":true,"1-3":true,"1-4":true,"1-5":true,"1-6":true,"2-1":true,"2-2":true});
+  const [done, setDone] = useState({"1-1":true,"1-2":true,"1-3":true,"1-4":true,"1-5":true,"1-6":true,"2-1":true,"2-2":true,"2-3":true,"2-4":true,"3-1":true,"3-2":true,"3-3":true,"4-1":true,"4-2":true,"5-1":true});
   const [expanded, setExpanded] = useState(null);
   const [copied, setCopied] = useState(null);
   const [activePhase, setActivePhase] = useState(1);

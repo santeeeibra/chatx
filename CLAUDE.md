@@ -4,38 +4,22 @@
 Aplicación web de videochat aleatorio (estilo ruleta) con matchmaking en tiempo real.
 Tecnologías principales: HTML/JS/CSS vainilla, Ably Realtime para signaling, WebRTC para conexiones P2P de audio y video, Supabase.
 
-## Estado Actual: Fase 1 (Video Chat Core) - 6/6 Completado 🚀
-Las funcionalidades core de la conexión ya están 100% operativas:
-- ✅ **Cámara local:** El preview de la cámara se renderiza correctamente (opacity 1, playsinline, autoplay).
-- ✅ **Signaling (Ably):** Conexión verificada y sin errores de consola.
-- ✅ **Matchmaking:** Emparejamiento exitoso entre pestañas vía Supabase/Ably.
-- ✅ **WebRTC Connection:** Handshake ICE completado sin problemas.
-- ✅ **Video Remoto:** Stream remoto reproduciéndose en el contenedor principal.
-- ✅ **Audio Echo Fix:** Elemento de video local con atributo `muted` activo para prevenir eco/feedback.
+## Estado Actual: Fases 1 a 4 Completadas 🚀
+Las fases de Video Chat Core, UX Polish, Moderation y Age gate & auth están 100% terminadas.
 
-## Tarea Inmediata (Fase 2: UX Polish) — 4/4 Completado ✅
-- ✅ **Connection status UI:** setStatus() con 4 estados (searching, connecting, connected, disconnected).
-- ✅ **"Siguiente" full reset:** Publica hangup en Ably, limpia PC y remoteVideo, cooldown 2s con countdown en botón, maneja hangup entrante del remoto.
-- ✅ **Handle partner disconnect:** overlay "Tu pareja se desconectó" + countdown 5s, auto-Siguiente, click Siguiente cancela countdown.
-- ✅ **Mobile responsive layout:** fixed positions para remoteVideo (100vw/100dvh), PiP local (bottom:80px), controls (bottom bar), header compacto en <768px.
-- *Instrucción para Claude Code:* Continuar con la tarea 2-3: detectar desconexión del remoto y mostrar overlay con countdown.
-
-## Fase 3: Moderación — 1/3 Completado
-- ✅ **Report modal:** modal con razones, comentario, insert en Supabase, toast y auto-Siguiente.
-
-## Fases Futuras (En espera)
-- 🛡️ Moderation (2/3 tareas restantes)
-- 🔞 Age gate & auth (0/2 tareas)
-- 💳 Monetization (0/2 tareas)
+## Fase Inmediata: Fase 5 (Monetización) — 1/2 Completado
+- ✅ **Premium feature gates:** Cooldown 30s para free, sin límite para premium. Banner de upgrade + premium.html con landing page ($4.99/mes, CCBill).
+- 🔲 **CCBill integration:** Desarrollar webhook serverless para procesar el ping de CCBill y actualizar el estado del usuario a 'premium' en la base de datos tras un pago exitoso.
+- *Instrucción para Claude Code:* Continuar con CCBill webhook serverless.
 
 ## ⚠️ PROTOCOLO AUTOMÁTICO DE FIN DE TAREA
 Cada vez que el usuario te pida implementar un paso y lo finalices con éxito, DEBES ejecutar este flujo automáticamente y sin que el usuario te lo pida:
 
 1. **Actualizar el Checklist React:**
    - Lee el archivo `D:\vdc\videochat-adulto\chatx_checklist.jsx`.
-   - Modifica el código para marcar la tarea recién completada como "lista" (por ejemplo, cambiando el estado de `false` a `true` o agregando el tilde correspondiente).
+   - Modifica el código para marcar la tarea recién completada como "lista".
 2. **Actualizar esta Memoria (CLAUDE.md):**
-   - Modifica este mismo archivo (`CLAUDE.md`) para actualizar la lista de "Estado Actual", agregando la tarea completada y ajustando el contador (ej: de 0/4 a 1/4).
+   - Modifica este mismo archivo (`CLAUDE.md`) para actualizar la lista de "Estado Actual", agregando la tarea completada y ajustando el contador.
 3. **Guardado en Git (Auto-Save):**
    - Ejecuta comandos en la terminal para guardar: `git add .`
    - Haz el commit: `git commit -m "feat: completado [nombre de la tarea] y checklist actualizado"`
