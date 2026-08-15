@@ -130,9 +130,9 @@ async function linkFingerprint(userId) {
   // fingerprint may not be ready yet; read from window if app.js stored it
   const fp = window.__camreal_fingerprint;
   if (!fp || !userId) return;
-  await supabase.from('user_profiles').upsert(
-    { user_id: userId, fingerprint: fp },
-    { onConflict: 'user_id' }
+  await supabase.from('usuarios_perfil').upsert(
+    { id: userId, fingerprint: fp },
+    { onConflict: 'id' }
   );
 }
 

@@ -37,6 +37,8 @@ import {
 import { ReactionsManager } from './reactions.js';
 import { StickersManager } from './stickers.js';
 import { VoiceMessagesManager, renderVoiceMsg } from './voice-messages.js';
+import { GiftsManager } from './gifts.js';
+import { VerificationManager } from './verification.js';
 
 // ============================================================
 // ESTADO GLOBAL
@@ -58,6 +60,8 @@ const estado = {
   reactions:         null,
   stickers:          null,
   voiceMsgs:         null,
+  gifts:             null,
+  verification:      null,
 };
 
 // ============================================================
@@ -83,7 +87,10 @@ const ui = {
   chatMessages:   document.getElementById('chat-messages'),
   chatPlaceholder:document.getElementById('chat-placeholder'),
   btnSticker:     document.getElementById('btn-sticker'),
+  btnGift:        document.getElementById('btn-gift'),
   btnVoiceMsg:    document.getElementById('btn-voice-msg'),
+  giftPanel:      document.getElementById('gift-panel'),
+  giftsOverlay:   document.getElementById('gifts-overlay'),
   stickerPanel:   document.getElementById('sticker-panel'),
   reactionsBar:   document.getElementById('reactions-bar'),
   reactionsOvl:   document.getElementById('reactions-overlay'),
@@ -133,6 +140,16 @@ async function iniciarApp() {
     }
   });
   if (ui.btnVoiceMsg) estado.voiceMsgs.init(ui.btnVoiceMsg);
+
+  // Gifts
+  estado.gifts = new GiftsManager(estado.isPremium, estado.fingerprint);
+  if (ui.btnGift && ui.giftPanel && ui.giftsOverlay) {
+    await estado.gifts.init(ui.btnGift, ui.giftPanel, ui.giftsOverlay);
+  }
+
+  // Verification
+  estado.verification = new VerificationManager();
+  await estado.verification.checkMyStatus();
 
   // Anonymous mode
   _iniciarModoAnonimo();
@@ -208,6 +225,14 @@ function _getRadio(name) {
 const FLAG_BASE_URL = 'https://flagpedia.net/data/flags/h80/';
 const EMOJI_FLAG_RX = /^[\u{1F1E6}-\u{1F1FF}]{2}\s*/u;
 
+// Fallback: cualquier código ISO alfa-2 se convierte en emoji de bandera
+function banderaEmoji(code) {
+  return String.fromCodePoint(
+    0x1F1E6 + code.charCodeAt(0) - 65,
+    0x1F1E6 + code.charCodeAt(1) - 65
+  );
+}
+
 function initCountryDropdown() {
   const wrap = document.getElementById('country-dropdown');
   const select = document.getElementById('pref-pais');
@@ -245,6 +270,12 @@ function initCountryDropdown() {
       img.width = 24;
       img.height = 16;
       img.loading = 'lazy';
+      img.addEventListener('error', () => {
+        const emoji = document.createElement('span');
+        emoji.className = 'country-dropdown__flag-emoji';
+        emoji.textContent = banderaEmoji(opt.value);
+        img.replaceWith(emoji);
+      });
       li.appendChild(img);
     } else {
       const globe = document.createElement('span');
@@ -266,8 +297,14 @@ function initCountryDropdown() {
       flagImg.removeAttribute('hidden');
       globeSpan.hidden = true;
       labelEl.textContent = selected ? selected.textContent.trim() : code;
+      flagImg.onerror = () => {
+        flagImg.hidden = true;
+        globeSpan.textContent = banderaEmoji(code);
+        globeSpan.hidden = false;
+      };
     } else {
       flagImg.hidden = true;
+      globeSpan.textContent = '🌐';
       globeSpan.hidden = false;
       labelEl.textContent = 'Otro / No especificar';
     }
@@ -389,11 +426,11 @@ async function checkPremium() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) return false;
   const { data } = await supabase
-    .from('user_profiles')
-    .select('is_premium')
-    .eq('user_id', session.user.id)
+    .from('usuarios_perfil')
+    .select('es_premium')
+    .eq('id', session.user.id)
     .single();
-  return data?.is_premium === true;
+  return data?.es_premium === true;
 }
 
 // ============================================================
@@ -582,6 +619,10 @@ async function iniciarWebRTC(match) {
           ui.chatMessages.appendChild(renderVoiceMsg(data.url, data.duration || 0, false));
           ui.chatMessages.scrollTop = ui.chatMessages.scrollHeight;
         }
+        break;
+
+      case 'gift':
+        if (data.emoji) estado.gifts?.receive(data.emoji);
         break;
     }
   });
@@ -831,17 +872,21 @@ function habilitarChat() {
   if (ui.btnChatSend) ui.btnChatSend.disabled = false;
   if (ui.chatPlaceholder) ui.chatPlaceholder.remove();
   if (ui.btnSticker) ui.btnSticker.disabled = false;
+  if (ui.btnGift) ui.btnGift.disabled = false;
   estado.reactions?.setChannel(estado.chatChannel, estado.fingerprint);
   estado.voiceMsgs?.setChannel(estado.chatChannel);
+  estado.gifts?.setChannel(estado.chatChannel, estado.remoteFingerprint);
 }
 
 function deshabilitarChat() {
   if (ui.chatInput) { ui.chatInput.disabled = true; ui.chatInput.value = ''; }
   if (ui.btnChatSend) ui.btnChatSend.disabled = true;
   if (ui.btnSticker) ui.btnSticker.disabled = true;
+  if (ui.btnGift) ui.btnGift.disabled = true;
   estado.reactions?.disable();
   estado.voiceMsgs?.disable();
   estado.stickers?.close();
+  estado.gifts?.disable();
   estado.vadRemote?.destroy();
   estado.vadRemote = null;
   // Reset messages
@@ -895,15 +940,28 @@ function mostrarInfoPareja(pais, genero) {
 
   if (!pais && !genero) { badge.classList.add('hidden'); return; }
 
-  flagEl.innerHTML = pais && PAIS_FLAGS[pais]
-    ? `<img class="partner-flag-img" src="${FLAG_BASE_URL}${pais.toLowerCase()}.png" alt="" width="24" height="16">`
+  const codePais = pais && PAIS_FLAGS[pais] ? pais : '';
+  flagEl.innerHTML = codePais
+    ? `<img class="partner-flag-img" src="${FLAG_BASE_URL}${codePais.toLowerCase()}.png" alt="" width="24" height="16">`
     : '';
+  if (codePais) {
+    const imgFlag = flagEl.querySelector('img');
+    imgFlag.addEventListener('error', () => {
+      const emoji = document.createElement('span');
+      emoji.className = 'partner-flag-emoji';
+      emoji.textContent = banderaEmoji(codePais);
+      imgFlag.replaceWith(emoji);
+    });
+  }
   labelEl.textContent = genero && GENERO_LABELS[genero] ? GENERO_LABELS[genero] : '';
   badge.classList.remove('hidden');
 
   // Gender color on label
   labelEl.className = '';
   if (genero && GENERO_CLASS[genero]) labelEl.classList.add(GENERO_CLASS[genero]);
+
+  // Verificar badge del partner
+  estado.verification?.showPartnerBadge(badge, estado.remoteFingerprint);
 }
 
 function ocultarInfoPareja() {

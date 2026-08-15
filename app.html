@@ -297,14 +297,18 @@
           </div>
 
         </div>
-        <!-- Badge info de la pareja (país + género) -->
+        <!-- Badge info de la pareja (país + género + verificado) -->
         <div class="partner-info hidden" id="partner-info">
           <span id="partner-flag"></span>
           <span id="partner-label"></span>
+          <!-- verified badge se inserta dinámicamente por VerificationManager -->
         </div>
 
         <!-- Reactions floating layer -->
         <div class="reactions-overlay" id="reactions-overlay"></div>
+
+        <!-- Gift animation overlay (separado de reacciones) -->
+        <div class="reactions-overlay" id="gifts-overlay"></div>
 
         <!-- Reactions bar (visible cuando conectado) -->
         <div class="reactions-bar hidden" id="reactions-bar"></div>
@@ -334,8 +338,12 @@
           <!-- Sticker picker -->
           <div class="sticker-panel hidden" id="sticker-panel"></div>
 
+          <!-- Gift picker -->
+          <div class="gift-panel hidden" id="gift-panel"></div>
+
           <div class="chat-input-row" id="chat-input-row">
             <button class="icon-btn icon-btn--sticker" id="btn-sticker" title="Stickers" disabled>😀</button>
+            <button class="icon-btn icon-btn--gift" id="btn-gift" title="Enviar regalo" disabled>🎁</button>
             <button class="icon-btn icon-btn--voice-msg" id="btn-voice-msg" title="Mantené presionado para grabar voz" disabled>🎤</button>
             <input type="text" class="chat-input" id="chat-input" placeholder="Escribí un mensaje..." maxlength="200" disabled>
             <button class="btn btn--primary btn--sm" id="btn-chat-send" disabled>

@@ -628,6 +628,7 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   justify-content: center;
   gap: 1rem;
+  overflow-y: auto;
   background: var(--bg);
   color: var(--text-muted);
   font-size: .875rem;
@@ -1040,6 +1041,9 @@ a { color: inherit; text-decoration: none; }
   max-width: 340px;
 }
 
+.prefs-panel.hidden { display: none; }
+.prefs-panel, .prefs-searching { margin-block: auto; }
+
 .prefs-title {
   font-size: 1.15rem;
   font-weight: 600;
@@ -1198,6 +1202,15 @@ a { color: inherit; text-decoration: none; }
   flex-shrink: 0;
 }
 
+.country-dropdown__flag-emoji {
+  width: 24px;
+  height: 16px;
+  font-size: .95rem;
+  line-height: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
 .country-dropdown__chevron {
   flex-shrink: 0;
   color: var(--text-muted);
@@ -1270,6 +1283,16 @@ a { color: inherit; text-decoration: none; }
   width: 24px;
   height: 16px;
   border-radius: 2px;
+  vertical-align: middle;
+}
+
+.partner-flag-emoji {
+  display: inline-block;
+  width: 24px;
+  height: 16px;
+  font-size: .9rem;
+  line-height: 16px;
+  text-align: center;
   vertical-align: middle;
 }
 
@@ -1586,4 +1609,110 @@ a { color: inherit; text-decoration: none; }
   font-size: .72rem;
   color: var(--text-muted);
   padding-left: 1.4rem;
+}
+
+/* ========================================
+   GIFTS
+   ======================================== */
+.icon-btn--gift {
+  font-size: 1rem;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gift-panel {
+  border-top: 1px solid var(--border);
+  background: var(--card);
+  padding: .6rem .5rem .5rem;
+}
+.gift-panel.hidden { display: none; }
+
+.gift-panel__balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: .5rem;
+}
+
+.gift-balance {
+  font-size: .82rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.btn--xs {
+  font-size: .72rem;
+  padding: .2rem .55rem;
+  border-radius: 6px;
+}
+
+.gift-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .35rem;
+}
+
+.gift-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .15rem;
+  padding: .4rem .2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .12s, transform .1s;
+}
+.gift-item:hover { background: rgba(109,40,217,.18); transform: scale(1.05); }
+.gift-item:active { transform: scale(.95); }
+.gift-item--locked { opacity: .4; cursor: not-allowed; }
+.gift-item--locked:hover { background: var(--surface); transform: none; }
+
+.gift-emoji { font-size: 1.5rem; line-height: 1; }
+.gift-name  { font-size: .62rem; color: var(--text-muted); }
+.gift-cost  { font-size: .65rem; color: var(--text); }
+
+/* Animación de flotar hacia arriba */
+@keyframes gift-float-up {
+  0%   { transform: translateY(0) scale(1);    opacity: 1; }
+  70%  { opacity: 1; }
+  100% { transform: translateY(-85vh) scale(1.6); opacity: 0; }
+}
+
+.gift-float {
+  position: absolute;
+  bottom: 8%;
+  font-size: 2.2rem;
+  animation: gift-float-up 2s ease-out forwards;
+  pointer-events: none;
+  user-select: none;
+  z-index: 22;
+}
+
+.gift-float--big {
+  font-size: 3.5rem;
+}
+
+/* ========================================
+   VERIFIED BADGE
+   ======================================== */
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: var(--success);
+  color: #fff;
+  border-radius: 50%;
+  font-size: .7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  title: 'Verificado';
 }
