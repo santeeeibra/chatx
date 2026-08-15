@@ -139,11 +139,15 @@ async function iniciarApp() {
 // PREFERENCIAS
 // ============================================================
 function _setRadio(name, value) {
+  const sel = document.querySelector(`select[name="${name}"]`);
+  if (sel) { sel.value = value; return; }
   const el = document.querySelector(`input[name="${name}"][value="${value}"]`);
   if (el) el.checked = true;
 }
 
 function _getRadio(name) {
+  const sel = document.querySelector(`select[name="${name}"]`);
+  if (sel) return sel.value;
   const el = document.querySelector(`input[name="${name}"]:checked`);
   return el ? el.value : null;
 }
@@ -645,10 +649,20 @@ function enviarMensajeChat() {
 // PARTNER INFO BADGE
 // ============================================================
 const PAIS_FLAGS = {
-  AR: '🇦🇷', MX: '🇲🇽', ES: '🇪🇸', CO: '🇨🇴', CL: '🇨🇱',
-  PE: '🇵🇪', VE: '🇻🇪', US: '🇺🇸', BR: '🇧🇷',
+  AR:'🇦🇷',BO:'🇧🇴',BR:'🇧🇷',CL:'🇨🇱',CO:'🇨🇴',CR:'🇨🇷',CU:'🇨🇺',
+  DO:'🇩🇴',EC:'🇪🇨',SV:'🇸🇻',GT:'🇬🇹',HN:'🇭🇳',MX:'🇲🇽',NI:'🇳🇮',
+  PA:'🇵🇦',PY:'🇵🇾',PE:'🇵🇪',PR:'🇵🇷',UY:'🇺🇾',VE:'🇻🇪',
+  ES:'🇪🇸',PT:'🇵🇹',CA:'🇨🇦',US:'🇺🇸',
+  DE:'🇩🇪',AT:'🇦🇹',BE:'🇧🇪',HR:'🇭🇷',DK:'🇩🇰',SK:'🇸🇰',SI:'🇸🇮',
+  EE:'🇪🇪',FI:'🇫🇮',FR:'🇫🇷',GR:'🇬🇷',HU:'🇭🇺',IE:'🇮🇪',IT:'🇮🇹',
+  LV:'🇱🇻',LT:'🇱🇹',LU:'🇱🇺',MT:'🇲🇹',NO:'🇳🇴',NL:'🇳🇱',PL:'🇵🇱',
+  CZ:'🇨🇿',RO:'🇷🇴',RU:'🇷🇺',SE:'🇸🇪',CH:'🇨🇭',TR:'🇹🇷',UA:'🇺🇦',GB:'🇬🇧',
+  AU:'🇦🇺',CN:'🇨🇳',PH:'🇵🇭',IN:'🇮🇳',ID:'🇮🇩',JP:'🇯🇵',MY:'🇲🇾',
+  NZ:'🇳🇿',KR:'🇰🇷',TH:'🇹🇭',VN:'🇻🇳',
+  ZA:'🇿🇦',EG:'🇪🇬',IL:'🇮🇱',MA:'🇲🇦',SA:'🇸🇦',AE:'🇦🇪',
 };
-const GENERO_LABELS = { M: 'Hombre', F: 'Mujer', NB: 'Otro' };
+const GENERO_LABELS = { M: '♂ Hombre', F: '♀ Mujer', NB: '⚧ Otro' };
+const GENERO_CLASS  = { M: 'gender--male', F: 'gender--female', NB: 'gender--nb' };
 
 function mostrarInfoPareja(pais, genero) {
   const badge = document.getElementById('partner-info');
@@ -656,18 +670,15 @@ function mostrarInfoPareja(pais, genero) {
   const labelEl = document.getElementById('partner-label');
   if (!badge) return;
 
-  const parts = [];
-  if (pais && PAIS_FLAGS[pais]) parts.push(PAIS_FLAGS[pais]);
-  if (genero && GENERO_LABELS[genero]) parts.push(GENERO_LABELS[genero]);
+  if (!pais && !genero) { badge.classList.add('hidden'); return; }
 
-  if (parts.length === 0) { badge.classList.add('hidden'); return; }
-
-  flagEl.textContent = PAIS_FLAGS[pais] || '';
-  labelEl.textContent = parts.filter(p => !PAIS_FLAGS[p]).join(' ') || GENERO_LABELS[genero] || '';
-  // Simplify: just show flag + gender label
   flagEl.textContent = pais && PAIS_FLAGS[pais] ? PAIS_FLAGS[pais] : '';
-  labelEl.textContent = genero && GENERO_LABELS[genero] ? GENERO_LABELS[genero] : (pais || '');
+  labelEl.textContent = genero && GENERO_LABELS[genero] ? GENERO_LABELS[genero] : '';
   badge.classList.remove('hidden');
+
+  // Gender color on label
+  labelEl.className = '';
+  if (genero && GENERO_CLASS[genero]) labelEl.classList.add(GENERO_CLASS[genero]);
 }
 
 function ocultarInfoPareja() {

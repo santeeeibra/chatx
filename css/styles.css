@@ -1102,6 +1102,46 @@ a { color: inherit; text-decoration: none; }
   color: var(--text);
 }
 
+/* Gender-specific chip colors */
+.pref-chip--male input:checked + span {
+  border-color: #3b82f6;
+  background: rgba(59,130,246,.18);
+  color: #93c5fd;
+}
+.pref-chip--female input:checked + span {
+  border-color: #ec4899;
+  background: rgba(236,72,153,.18);
+  color: #f9a8d4;
+}
+.pref-chip--nb input:checked + span {
+  border-color: #eab308;
+  background: rgba(234,179,8,.18);
+  color: #fde047;
+}
+.pref-chip--male:hover span { border-color: #3b82f6; color: #93c5fd; }
+.pref-chip--female:hover span { border-color: #ec4899; color: #f9a8d4; }
+.pref-chip--nb:hover span { border-color: #eab308; color: #fde047; }
+
+/* Country select dropdown */
+.pref-country-select {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: .82rem;
+  padding: .35rem .5rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s;
+  max-width: 100%;
+}
+.pref-country-select:focus,
+.pref-country-select:hover {
+  border-color: var(--primary);
+}
+
 .pref-chip:hover span {
   border-color: var(--primary);
   color: var(--text);
@@ -1234,5 +1274,8 @@ a { color: inherit; text-decoration: none; }
 }
 .partner-info.hidden { display: none; }
 .partner-info svg, .partner-info img { display: block; }
+.partner-info .gender--male   { color: #93c5fd; }
+.partner-info .gender--female { color: #f9a8d4; }
+.partner-info .gender--nb     { color: #fde047; }
 
 .prefs-change-btn:hover { opacity: 1; }
