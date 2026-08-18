@@ -1,8 +1,46 @@
+const PLANS = {
+  monthly: {
+    reason: 'CamReal Premium — Mensual',
+    auto_recurring: {
+      frequency: 1,
+      frequency_type: 'months',
+      transaction_amount: 35000,
+      currency_id: 'ARS',
+    },
+  },
+  weekly: {
+    reason: 'CamReal Premium — Semanal',
+    auto_recurring: {
+      frequency: 1,
+      frequency_type: 'weeks',
+      transaction_amount: 9900,
+      currency_id: 'ARS',
+    },
+  },
+  days3: {
+    reason: 'CamReal Premium — 3 días',
+    auto_recurring: {
+      frequency: 3,
+      frequency_type: 'days',
+      transaction_amount: 3900,
+      currency_id: 'ARS',
+      free_trial: {
+        frequency: 1,
+        frequency_type: 'days',
+      },
+    },
+  },
+};
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'unauthorized' });
+
+  const { plan } = req.body || {};
+  const selectedPlan = PLANS[plan];
+  if (!selectedPlan) return res.status(400).json({ error: 'invalid plan' });
 
   const userRes = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
     headers: {
@@ -20,15 +58,9 @@ module.exports = async function handler(req, res) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      reason: 'CamReal Premium',
+      ...selectedPlan,
       external_reference: user.id,
       payer_email: user.email,
-      auto_recurring: {
-        frequency: 1,
-        frequency_type: 'months',
-        transaction_amount: 4.99,
-        currency_id: 'USD',
-      },
       back_url: 'https://chatreal.live/premium.html',
       status: 'pending',
     }),
