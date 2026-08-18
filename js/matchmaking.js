@@ -132,6 +132,7 @@ export async function buscarPareja(miFingerprint, prefs = {}, relaxLevel = 0, on
       if (msgData.type === 'match-found' || msgData.type === 'offer') {
         resolved = true;
         clearTimeout(timeoutId);
+        clearInterval(pollId);
         console.log('[Match] Match found (incoming):', msgData.fingerprint);
         resolve({
           channelName,
@@ -146,10 +147,65 @@ export async function buscarPareja(miFingerprint, prefs = {}, relaxLevel = 0, on
 
     subscribeSignaling(slotId, onMatchMessage, () => {}, () => {});
 
+    // Poll cada 3s para detectar si alguien más entró a la cola al mismo tiempo
+    const pollId = setInterval(async () => {
+      if (resolved) { clearInterval(pollId); return; }
+
+      let q = supabase
+        .from('sala_espera')
+        .select('*')
+        .eq('estado', 'esperando')
+        .neq('fingerprint_a', miFingerprint)
+        .order('creado_en', { ascending: true })
+        .limit(1);
+
+      if (relaxLevel < 2 && prefs.prefGenero && prefs.prefGenero !== 'any') {
+        q = q.eq('genero_a', prefs.prefGenero);
+      }
+
+      const { data: otro } = await q.maybeSingle();
+      if (!otro || resolved) return;
+
+      const { data: tomado, error } = await supabase
+        .from('sala_espera')
+        .update({ fingerprint_b: miFingerprint, estado: 'conectado' })
+        .eq('id', otro.id)
+        .eq('estado', 'esperando')
+        .select()
+        .maybeSingle();
+
+      if (!error && tomado && !resolved) {
+        resolved = true;
+        clearInterval(pollId);
+        clearTimeout(timeoutId);
+        await limpiarSlot(slotId);
+        const ch = getSignalingChannel(tomado.id);
+        if (ch) {
+          await ch.attach();
+          await ch.publish('message', {
+            type: 'match-found',
+            fingerprint: miFingerprint,
+            pais: prefs.pais || '',
+            genero: prefs.genero || '',
+          });
+        }
+        console.log('[Match] Match found (poll):', otro.fingerprint_a);
+        resolve({
+          channelName: tomado.channel_name,
+          slotId: tomado.id,
+          remoteFingerprint: tomado.fingerprint_a,
+          role: 'publisher',
+          remotePais: otro.pais_a || '',
+          remoteGenero: otro.genero_a || '',
+        });
+      }
+    }, 3000);
+
     const nextRelaxLevel = relaxLevel + 1;
     const timeoutId = setTimeout(async () => {
       if (resolved) return;
       resolved = true;
+      clearInterval(pollId);
       cleanupably();
       await limpiarSlot(slotId);
 
