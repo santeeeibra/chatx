@@ -61,6 +61,7 @@ module.exports = async function handler(req, res) {
     body: JSON.stringify({
       ...selectedPlan,
       external_reference: user.id,
+      payer_email: user.email,
       back_url: 'https://chatreal.live/premium.html',
       status: 'pending',
     }),
