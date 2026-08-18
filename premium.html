@@ -229,7 +229,7 @@
         <p class="premium-expiry" id="premium-expiry">Vencimiento: (fecha por confirmar)</p>
       </div>
 
-      <p class="premium-footer">Procesado de forma segura por CCBill · Cancela cuando quieras</p>
+      <p class="premium-footer">Procesado de forma segura por Mercado Pago · Cancela cuando quieras</p>
 
     </div>
   </main>
@@ -237,9 +237,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script type="module">
     import { supabase } from './js/supabase-client.js';
-
-    // ── Placeholder de CCBill — reemplazar cuando tengamos las credenciales ──
-    const CCBILL_PAYMENT_URL = "https://bill.ccbill.com/jpost/signup.cgi?TODO=REEMPLAZAR";
 
     // ── DOM refs ──────────────────────────────────────────────
     const btnSubscribe = document.getElementById('btn-subscribe');
@@ -264,9 +261,25 @@
       }
     }
 
-    // ── Botón de pago → abrir página CCBill en nueva pestaña ──
-    btnSubscribe.addEventListener('click', () => {
-      window.open(CCBILL_PAYMENT_URL, '_blank', 'noopener');
+    // ── Botón de pago → crear suscripción MP y redirigir ──────
+    btnSubscribe.addEventListener('click', async () => {
+      btnSubscribe.disabled = true;
+      btnSubscribe.textContent = 'Redirigiendo…';
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        const res = await fetch('/api/create-subscription', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const { url } = await res.json();
+        if (url) window.location.href = url;
+        else throw new Error('sin url');
+      } catch (_) {
+        btnSubscribe.disabled = false;
+        btnSubscribe.textContent = 'Suscribirte por $4.99/mes';
+        alert('Error al iniciar el pago. Intentá de nuevo.');
+      }
     });
 
     // ── Estado de suscripción ─────────────────────────────────
