@@ -1,21 +1,20 @@
-import { createClient } from '@supabase/supabase-js';
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  // Verificar sesión Supabase desde el Authorization header
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'unauthorized' });
 
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  // Verificar token con Supabase REST
+  const userRes = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: process.env.SUPABASE_ANON_KEY,
+    },
+  });
+  if (!userRes.ok) return res.status(401).json({ error: 'invalid token' });
+  const user = await userRes.json();
 
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return res.status(401).json({ error: 'invalid token' });
-
-  // Crear preapproval en MP con external_reference = user.id
+  // Crear preapproval en MP
   const mpRes = await fetch('https://api.mercadopago.com/preapproval', {
     method: 'POST',
     headers: {
@@ -37,11 +36,8 @@ export default async function handler(req, res) {
     }),
   });
 
-  if (!mpRes.ok) {
-    const err = await mpRes.json();
-    return res.status(502).json({ error: 'mp error', detail: err });
-  }
+  const mpData = await mpRes.json();
+  if (!mpRes.ok) return res.status(502).json({ error: 'mp error', detail: mpData });
 
-  const { init_point } = await mpRes.json();
-  return res.status(200).json({ url: init_point });
+  return res.status(200).json({ url: mpData.init_point });
 }
