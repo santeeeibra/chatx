@@ -547,8 +547,8 @@ async function iniciarMatchmaking() {
       return;
     }
     console.error('[App] Error en matchmaking:', err);
-    setStatus('disconnected');
     if (!estado.pausado) setTimeout(iniciarMatchmaking, 3000);
+    else setStatus('disconnected');
   }
 }
 

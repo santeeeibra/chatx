@@ -8,9 +8,13 @@ import { supabase } from './supabase-client.js';
 // DOM refs
 const authModal     = document.getElementById('auth-modal');
 const btnLogin      = document.getElementById('btn-login');
+const btnLoginMobile= document.getElementById('btn-login-mobile');
 const userAvatar    = document.getElementById('user-avatar');
+const userAvatarMob = document.getElementById('user-avatar-mobile');
 const avatarInitials= document.getElementById('avatar-initials');
+const avatarInitMob = document.getElementById('avatar-initials-mobile');
 const avatarEmail   = document.getElementById('avatar-email');
+const avatarEmailMob= document.getElementById('avatar-email-mobile');
 const avatarDropdown= document.getElementById('avatar-dropdown');
 const btnLogout     = document.getElementById('btn-logout');
 const btnAuthCancel = document.getElementById('btn-auth-cancel');
@@ -36,14 +40,21 @@ function setLoggedIn(user) {
   avatarInitials.textContent = initials;
   avatarEmail.textContent = user.email;
   userAvatar.title = user.email;
+  if (avatarInitMob)  avatarInitMob.textContent  = initials;
+  if (avatarEmailMob) avatarEmailMob.textContent = user.email;
+  if (userAvatarMob)  userAvatarMob.title        = user.email;
 
   btnLogin.classList.add('hidden');
+  btnLoginMobile?.classList.add('hidden');
   userAvatar.classList.remove('hidden');
+  userAvatarMob?.classList.remove('hidden');
 }
 
 function setLoggedOut() {
   btnLogin.classList.remove('hidden');
+  btnLoginMobile?.classList.remove('hidden');
   userAvatar.classList.add('hidden');
+  userAvatarMob?.classList.add('hidden');
   avatarDropdown.classList.add('hidden');
 }
 
