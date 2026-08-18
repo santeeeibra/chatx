@@ -35,6 +35,7 @@ const PLANS = {
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
+  try {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'unauthorized' });
 
@@ -69,4 +70,9 @@ module.exports = async function handler(req, res) {
   if (!mpRes.ok) return res.status(502).json({ error: 'mp error', detail: mpData });
 
   return res.status(200).json({ url: mpData.init_point });
+
+  } catch (err) {
+    console.error('[create-subscription] error:', err);
+    return res.status(500).json({ error: 'internal error', message: err.message });
+  }
 };
