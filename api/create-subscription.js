@@ -1,10 +1,9 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'unauthorized' });
 
-  // Verificar token con Supabase REST
   const userRes = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -14,7 +13,6 @@ export default async function handler(req, res) {
   if (!userRes.ok) return res.status(401).json({ error: 'invalid token' });
   const user = await userRes.json();
 
-  // Crear preapproval en MP
   const mpRes = await fetch('https://api.mercadopago.com/preapproval', {
     method: 'POST',
     headers: {
@@ -40,4 +38,4 @@ export default async function handler(req, res) {
   if (!mpRes.ok) return res.status(502).json({ error: 'mp error', detail: mpData });
 
   return res.status(200).json({ url: mpData.init_point });
-}
+};

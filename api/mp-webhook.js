@@ -1,9 +1,8 @@
-import crypto from 'crypto';
+const crypto = require('crypto');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  // Verificar firma de MP
   const xSignature = req.headers['x-signature'];
   const xRequestId = req.headers['x-request-id'];
   if (!xSignature) return res.status(400).json({ error: 'missing signature' });
@@ -25,7 +24,6 @@ export default async function handler(req, res) {
   const { type, data } = req.body;
   if (type !== 'subscription_preapproval') return res.status(200).json({ ok: true });
 
-  // Fetch detalles desde MP
   const mpRes = await fetch(`https://api.mercadopago.com/preapproval/${data.id}`, {
     headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` },
   });
@@ -35,13 +33,11 @@ export default async function handler(req, res) {
   const userId = sub.external_reference;
   if (!userId) return res.status(200).json({ ok: true, skipped: 'no external_reference' });
 
-  // Actualizar Supabase via REST
-  const supaUrl = `${process.env.SUPABASE_URL}/rest/v1/user_profiles?user_id=eq.${userId}`;
   const patch = sub.status === 'authorized'
     ? { is_premium: true, premium_until: sub.next_payment_date }
     : { is_premium: false, premium_until: null };
 
-  await fetch(supaUrl, {
+  await fetch(`${process.env.SUPABASE_URL}/rest/v1/user_profiles?user_id=eq.${userId}`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
@@ -53,4 +49,4 @@ export default async function handler(req, res) {
   });
 
   return res.status(200).json({ ok: true });
-}
+};
