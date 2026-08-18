@@ -1058,6 +1058,7 @@ const SEARCH_TIPS = [
 let _tipInterval = null;
 
 function iniciarTips() {
+  if (_tipInterval) { clearInterval(_tipInterval); _tipInterval = null; }
   const el = document.getElementById('search-tip');
   if (!el) return;
   let i = Math.floor(Math.random() * SEARCH_TIPS.length);
