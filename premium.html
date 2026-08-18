@@ -61,15 +61,37 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .premium-price {
-      font-size: 1.1rem;
-      color: var(--text-muted);
+    .plan-grid {
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
       margin-bottom: 2rem;
     }
-    .premium-price strong {
-      font-size: 2.25rem;
+    .plan-card {
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: var(--radius-sm);
+      padding: .9rem 1rem;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      background: transparent;
       color: var(--text);
+    }
+    .plan-card:hover { border-color: rgba(255,215,0,.5); background: rgba(255,215,0,.04); }
+    .plan-card.selected { border-color: #FFD700; background: rgba(255,215,0,.07); }
+    .plan-label { font-weight: 600; font-size: .95rem; }
+    .plan-price { font-size: .9rem; color: var(--text-muted); }
+    .plan-trial {
+      font-size: .7rem;
       font-weight: 700;
+      background: rgba(255,215,0,.18);
+      color: #FFD700;
+      border-radius: 99px;
+      padding: .15rem .5rem;
+      white-space: nowrap;
     }
     .premium-benefits {
       list-style: none;
@@ -175,7 +197,29 @@
 
       <h1 class="premium-title">Hazte Premium</h1>
 
-      <p class="premium-price"><strong>$4.99</strong> / mes</p>
+      <div class="plan-grid" id="plan-grid">
+        <button class="plan-card selected" data-plan="monthly" type="button">
+          <span>
+            <span class="plan-label">Mensual</span><br>
+            <span class="plan-price">$35.000 ARS / mes</span>
+          </span>
+          <span class="plan-trial">1 día gratis</span>
+        </button>
+        <button class="plan-card" data-plan="weekly" type="button">
+          <span>
+            <span class="plan-label">Semanal</span><br>
+            <span class="plan-price">$9.900 ARS / semana</span>
+          </span>
+          <span class="plan-trial">1 día gratis</span>
+        </button>
+        <button class="plan-card" data-plan="2day" type="button">
+          <span>
+            <span class="plan-label">2 días</span><br>
+            <span class="plan-price">$3.900 ARS / 2 días</span>
+          </span>
+          <span class="plan-trial">1 día gratis</span>
+        </button>
+      </div>
 
       <ul class="premium-benefits">
         <li>
@@ -221,7 +265,8 @@
       </div>
 
       <div id="status-subscribe" class="status-block status-action">
-        <button type="button" id="btn-subscribe" class="btn--premium">Suscribirte por $4.99/mes</button>
+        <p id="subscribe-error" style="display:none;color:#f87171;font-size:.85rem;margin:0;"></p>
+        <button type="button" id="btn-subscribe" class="btn--premium">Continuar con el plan seleccionado</button>
       </div>
 
       <div id="status-premium" class="status-block status-action">
@@ -229,7 +274,7 @@
         <p class="premium-expiry" id="premium-expiry">Vencimiento: (fecha por confirmar)</p>
       </div>
 
-      <p class="premium-footer">Procesado de forma segura por CCBill · Cancela cuando quieras</p>
+      <p class="premium-footer">Procesado de forma segura por MercadoPago · Cancela cuando quieras</p>
 
     </div>
   </main>
@@ -238,17 +283,28 @@
   <script type="module">
     import { supabase } from './js/supabase-client.js';
 
-    // ── Placeholder de CCBill — reemplazar cuando tengamos las credenciales ──
-    const CCBILL_PAYMENT_URL = "https://bill.ccbill.com/jpost/signup.cgi?TODO=REEMPLAZAR";
-
     // ── DOM refs ──────────────────────────────────────────────
-    const btnSubscribe = document.getElementById('btn-subscribe');
-    const statusChecking = document.getElementById('status-checking');
+    const btnSubscribe    = document.getElementById('btn-subscribe');
+    const subscribeError  = document.getElementById('subscribe-error');
+    const statusChecking  = document.getElementById('status-checking');
     const statusNotLogged = document.getElementById('status-not-logged');
     const statusSubscribe = document.getElementById('status-subscribe');
-    const statusPremium = document.getElementById('status-premium');
-    const premiumExpiry = document.getElementById('premium-expiry');
+    const statusPremium   = document.getElementById('status-premium');
+    const premiumExpiry   = document.getElementById('premium-expiry');
+    const planGrid        = document.getElementById('plan-grid');
     const blocks = [statusChecking, statusNotLogged, statusSubscribe, statusPremium];
+
+    let selectedPlan = 'monthly';
+
+    // ── Plan selector ─────────────────────────────────────────
+    planGrid.addEventListener('click', e => {
+      const card = e.target.closest('[data-plan]');
+      if (!card) return;
+      selectedPlan = card.dataset.plan;
+      planGrid.querySelectorAll('.plan-card').forEach(c =>
+        c.classList.toggle('selected', c === card)
+      );
+    });
 
     function showBlock(block) {
       blocks.forEach(b => b.classList.toggle('active', b === block));
@@ -259,14 +315,41 @@
         return new Date(iso).toLocaleDateString('es-AR', {
           day: 'numeric', month: 'long', year: 'numeric'
         });
-      } catch (_) {
-        return 'fecha por confirmar';
-      }
+      } catch (_) { return 'fecha por confirmar'; }
     }
 
-    // ── Botón de pago → abrir página CCBill en nueva pestaña ──
-    btnSubscribe.addEventListener('click', () => {
-      window.open(CCBILL_PAYMENT_URL, '_blank', 'noopener');
+    // ── Botón de pago → crear preapproval en MP ───────────────
+    let currentUser = null;
+
+    btnSubscribe.addEventListener('click', async () => {
+      if (!currentUser) return;
+      subscribeError.style.display = 'none';
+      btnSubscribe.disabled = true;
+      btnSubscribe.textContent = 'Procesando…';
+
+      try {
+        const res = await fetch('/api/mp-subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plan: selectedPlan,
+            user_id: currentUser.id,
+            user_email: currentUser.email,
+          }),
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) throw new Error(json.error || 'Error desconocido');
+
+        // Redirect to MP checkout
+        location.href = json.init_point;
+      } catch (err) {
+        subscribeError.textContent = `Error: ${err.message}`;
+        subscribeError.style.display = 'block';
+        btnSubscribe.disabled = false;
+        btnSubscribe.textContent = 'Continuar con el plan seleccionado';
+      }
     });
 
     // ── Estado de suscripción ─────────────────────────────────
@@ -274,14 +357,9 @@
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
 
-      // No logueado → pedir login
-      if (!user) {
-        showBlock(statusNotLogged);
-        return;
-      }
+      if (!user) { showBlock(statusNotLogged); return; }
+      currentUser = user;
 
-      // Logueado → verificar premium en user_profiles
-      // Si la consulta falla (tabla/columna inexistente) → siempre botón de pago, sin error
       const { data: profile, error } = await supabase
         .from('user_profiles')
         .select('is_premium, premium_until')
@@ -293,7 +371,6 @@
         return;
       }
 
-      // Premium activo
       if (profile.premium_until) {
         premiumExpiry.textContent = `Vencimiento estimado: ${formatDate(profile.premium_until)}`;
       }

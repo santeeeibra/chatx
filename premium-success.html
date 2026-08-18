@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>¡Suscripción activada! — CamReal</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎥</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .success-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .success-card {
+      background: var(--card);
+      border: 1px solid rgba(255,215,0,.28);
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .success-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+    .success-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #FFD700, #F59E0B);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: .5rem;
+    }
+    .success-sub { color: var(--text-muted); font-size: .95rem; margin-bottom: 2rem; }
+    .countdown { font-size: .82rem; color: var(--text-faint); }
+  </style>
+</head>
+<body class="landing-body">
+  <div class="landing-bg"><div class="landing-glow"></div></div>
+  <main class="success-page">
+    <div class="success-card">
+      <div class="success-icon">⚡</div>
+      <h1 class="success-title">¡Ya eres Premium!</h1>
+      <p class="success-sub">Tu suscripción fue activada correctamente.<br>Disfrutá todos los beneficios ahora.</p>
+      <a href="app.html" class="btn--premium" style="display:inline-block;padding:.75rem 1.75rem;font-size:.95rem;text-decoration:none;border-radius:8px;background:linear-gradient(135deg,#FFD700,#F59E0B);color:#111;font-weight:700;">Ir a CamReal →</a>
+      <p class="countdown" id="countdown" style="margin-top:1.25rem;">Redirigiendo en 5 segundos…</p>
+    </div>
+  </main>
+  <script>
+    let s = 5;
+    const el = document.getElementById('countdown');
+    const t = setInterval(() => {
+      s--;
+      el.textContent = `Redirigiendo en ${s} segundo${s !== 1 ? 's' : ''}…`;
+      if (s <= 0) { clearInterval(t); location.href = 'app.html'; }
+    }, 1000);
+  </script>
+</body>
+</html>
