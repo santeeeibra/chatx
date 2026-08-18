@@ -1,13 +1,35 @@
 // MercadoPago subscription webhook.
 // MP sends POST with { type: 'subscription_preapproval', data: { id } }
+// Signature header format: x-signature: ts=<ts>,v1=<hmac-sha256>
+// Signed template: id:<data.id>;request-id:<x-request-id>;ts:<ts>
 
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
 const PLAN_DURATION_MS = {
   monthly: 31 * 24 * 60 * 60 * 1000,
   weekly:  7  * 24 * 60 * 60 * 1000,
   '2day':  2  * 24 * 60 * 60 * 1000,
 };
+
+function verifyMpSignature(req, dataId) {
+  const secret = process.env.MP_WEBHOOK_SECRET;
+  if (!secret) return true; // skip in dev if not set
+
+  const xSignature  = req.headers['x-signature']  ?? '';
+  const xRequestId  = req.headers['x-request-id'] ?? '';
+
+  const tsMatch = xSignature.match(/ts=(\d+)/);
+  const v1Match = xSignature.match(/v1=([a-f0-9]+)/);
+  if (!tsMatch || !v1Match) return false;
+
+  const ts       = tsMatch[1];
+  const received = v1Match[1];
+  const template = `id:${dataId};request-id:${xRequestId};ts:${ts}`;
+  const expected = crypto.createHmac('sha256', secret).update(template).digest('hex');
+
+  return crypto.timingSafeEqual(Buffer.from(received, 'hex'), Buffer.from(expected, 'hex'));
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -17,6 +39,12 @@ export default async function handler(req, res) {
   // Only handle preapproval events
   if (type !== 'subscription_preapproval' || !data?.id) {
     return res.status(200).json({ ok: true, skipped: true });
+  }
+
+  // Verify MP signature — reject forged requests
+  if (!verifyMpSignature(req, data.id)) {
+    console.error('[MP Webhook] Invalid signature — request rejected');
+    return res.status(401).json({ error: 'Invalid signature' });
   }
 
   // Fetch the preapproval details from MP
