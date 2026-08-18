@@ -37,10 +37,20 @@ ABLY_API_KEY · SUPABASE_URL · SUPABASE_ANON_KEY
 - [x] Fase 2: Signaling Ably + WebRTC básico
 - [x] Fase 3: UX polish (spinner, disabled states, styles)
 - [x] Fase 4: Moderación + ban system
-- [x] Fase 5: Auth + age gate + CCBill
+- [x] Fase 5: Auth + age gate + pagos
   - [x] Age gate +18 (ya existía; verificado: checkbox, localStorage, guard en app.html)
   - [x] Auth (registro/login Supabase → registro.html pendiente)
-  - [x] CCBill (suscripción premium → premium.html con placeholders)
+  - [x] Pagos: migrado CCBill → Mercado Pago (2026-08-18)
+
+## Estado de pagos (2026-08-18)
+- Proveedor: Mercado Pago (Argentina, ARS)
+- Planes: Mensual $35.000 / Semanal $9.900 / 3 días $3.900 (1er día gratis)
+- Flujo: premium.html → /api/create-subscription → MP preapproval → init_point
+- Webhook: /api/mp-webhook verifica firma HMAC y actualiza user_profiles.is_premium
+- Archivos: /api/create-subscription.js, /api/mp-webhook.js
+- Env vars Vercel: MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
+- Estado: flujo probado (webhook OK). No se puede probar con la misma cuenta de MP que es collector.
+- Acceso: botón ⚡ Premium en header de app.html → premium.html
 
 ## Tarea actual
 
@@ -52,7 +62,7 @@ ABLY_API_KEY · SUPABASE_URL · SUPABASE_ANON_KEY
 - Fase 5 age gate: ya existía en /index.html (checkbox, localStorage, guard en app.html). Verificado end-to-end. Creado /tos.html (enlace roto). Pendiente: Auth + CCBill.
 ## Rebrand ChatX → CamReal + reorganización de estructura (completado)
 ## Decisiones importantes
-- Pago: CCBill ~$4.99/mo (futuro)
+- Pago: Mercado Pago ARS — Mensual $35.000 / Semanal $9.900 / 3 días $3.900
 - Moderación: 1er reporte → ban 24h → 2do → ban permanente
 - PWA, no app nativa (evita App Store)
 - Fase 4 (2026-08-15): reportUser(fingerprint) en reportes.js, checkBan al entrar a la cola en matchmaking.js, overlay de ban reutilizado
